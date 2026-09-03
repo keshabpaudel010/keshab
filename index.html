@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phone Finder</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, Segoe UI, Roboto, sans-serif;
+    background: #0f0f0f; color: #f0f0f0;
+    min-height: 100vh; display: flex;
+    align-items: center; justify-content: center; padding: 24px 16px;
+  }
+  .wrap { width: 100%; max-width: 400px; }
+  .logo { font-size: 40px; text-align: center; margin-bottom: 8px; }
+  h1 { font-size: 22px; font-weight: 600; text-align: center; margin-bottom: 4px; }
+  .sub { color: #888; font-size: 13px; text-align: center; margin-bottom: 32px; }
+  input[type=password] {
+    width: 100%; padding: 14px 16px; font-size: 16px;
+    background: #1a1a1a; border: 1px solid #2e2e2e; border-radius: 10px;
+    color: #f0f0f0; outline: none; margin-bottom: 12px;
+  }
+  input[type=password]:focus { border-color: #555; }
+  .btn-login {
+    width: 100%; padding: 14px; font-size: 15px; font-weight: 600;
+    background: #f0f0f0; color: #0f0f0f; border: none;
+    border-radius: 10px; cursor: pointer;
+  }
+  .btn-login:disabled { opacity: 0.4; cursor: default; }
+  .err-msg { color: #ff5f5f; font-size: 13px; text-align: center; margin-top: 10px; min-height: 18px; }
+  .screen-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+  .screen-title { font-size: 20px; font-weight: 600; }
+  .logout-btn {
+    font-size: 12px; color: #aaa; background: none;
+    border: 1px solid #2e2e2e; border-radius: 6px; padding: 5px 10px; cursor: pointer;
+  }
+  .room-tag { color: #555; font-size: 12px; margin-bottom: 20px; }
+  .device-card {
+    background: #1a1a1a; border: 1px solid #2a2a2a;
+    border-radius: 12px; padding: 16px; margin-bottom: 12px;
+  }
+  .device-name { font-size: 15px; font-weight: 500; margin-bottom: 12px; }
+  .device-btns { display: flex; gap: 8px; }
+  .ring-btn, .stop-btn {
+    flex: 1; padding: 10px; font-size: 14px; font-weight: 600;
+    border: none; border-radius: 8px; cursor: pointer; color: #fff;
+  }
+  .ring-btn { background: #1d4ed8; }
+  .stop-btn { background: #b91c1c; }
+  .ring-btn:disabled, .stop-btn:disabled { opacity: 0.4; cursor: default; }
+  .device-status { font-size: 12px; margin-top: 8px; min-height: 16px; color: #666; }
+  .device-status.sending { color: #facc15; }
+  .device-status.ok      { color: #4ade80; }
+  .device-status.error   { color: #f87171; }
+  .empty-msg { text-align: center; color: #555; font-size: 14px; margin-top: 40px; }
+  .spinner   { text-align: center; color: #555; font-size: 14px; margin-top: 20px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- LOGIN -->
+  <div id="loginScreen">
+    <div class="logo">📱</div>
+    <h1>Phone Finder</h1>
+    <p class="sub">Family access — enter password</p>
+    <input type="password" id="passInput" placeholder="Password" autocomplete="off">
+    <button class="btn-login" id="loginBtn" onclick="doLogin()">Login</button>
+    <div class="err-msg" id="errMsg"></div>
+  </div>
+
+  <!-- DEVICES -->
+  <div id="deviceScreen" style="display:none;">
+    <div class="screen-header">
+      <div class="screen-title">📱 Phone Finder</div>
+      <button class="logout-btn" onclick="doLogout()">Logout</button>
+    </div>
+    <div class="room-tag">Room 0001</div>
+    <div id="deviceList"></div>
+  </div>
+
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+
+<script>
+// ══════════════════════════════════════════════
+//  FILL THESE — Firebase Console
+//  Project Settings → Your apps → Web app
+// ══════════════════════════════════════════════
+const FIREBASE_API_KEY = "AIzaSyBSAknGfbpQ6zFjA3LlY6m_kPfINIFCyX4";
+const FIREBASE_APP_ID  = "1:213285785887:web:9dda7e5f8fc475e4eea02a";
+// ══════════════════════════════════════════════
+
+const ROOM = "0001";
+
+firebase.initializeApp({
+  apiKey:      FIREBASE_API_KEY,
+  databaseURL: "https://phonefinder-cc9d2-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:   "phonefinder-cc9d2",
+  appId:       FIREBASE_APP_ID
+});
+
+const db   = firebase.database();
+const auth = firebase.auth();
+
+let deviceListener = null;
+let osAppId = null;  // loaded from Firebase after login
+let osKey   = null;  // loaded from Firebase after login
+
+// ── LOGIN ─────────────────────────────────────
+
+document.getElementById("passInput")
+  .addEventListener("keydown", e => { if (e.key === "Enter") doLogin(); });
+
+function doLogin() {
+  const pass = document.getElementById("passInput").value.trim();
+  if (!pass) return;
+  const btn = document.getElementById("loginBtn");
+  const err = document.getElementById("errMsg");
+  btn.disabled = true;
+  btn.textContent = "Checking...";
+  err.textContent = "";
+
+  auth.signInAnonymously()
+    .then(() => {
+      // Read 1: check password
+      return db.ref("sitePassword/" + pass).get();
+    })
+    .then(snap => {
+      if (!snap.exists() || snap.val() !== true) {
+        auth.signOut();
+        err.textContent = "Incorrect password.";
+        btn.disabled = false;
+        btn.textContent = "Login";
+        return;
+      }
+      // Read 2: get OneSignal keys from Firebase (safe — password required to get here)
+      return db.ref("privateConfig").get().then(configSnap => {
+        osAppId = configSnap.child("oneSignalAppId").val();
+        osKey   = configSnap.child("oneSignalKey").val();
+        // Show device screen
+        document.getElementById("loginScreen").style.display = "none";
+        document.getElementById("deviceScreen").style.display = "block";
+        loadDevices();
+      });
+    })
+    .catch(() => {
+      err.textContent = "Connection error. Try again.";
+      btn.disabled = false;
+      btn.textContent = "Login";
+    });
+}
+
+// ── LOAD DEVICES ──────────────────────────────
+// 1 listener — stays live, no repeat reads
+
+function loadDevices() {
+  const listEl = document.getElementById("deviceList");
+  listEl.innerHTML = '<div class="spinner">Loading...</div>';
+
+  deviceListener = db.ref("rooms/" + ROOM).on("value", snap => {
+    listEl.innerHTML = "";
+    if (!snap.exists()) {
+      listEl.innerHTML = '<div class="empty-msg">No devices connected.</div>';
+      return;
+    }
+    let count = 0;
+    snap.forEach(child => {
+      const deviceId    = child.key;
+      const name        = child.child("name").val() || "Unknown";
+      const oneSignalId = child.child("oneSignalId").val();
+      if (!oneSignalId) return;
+      count++;
+      const card = document.createElement("div");
+      card.className = "device-card";
+      card.innerHTML = `
+        <div class="device-name">📱 ${esc(name)}</div>
+        <div class="device-btns">
+          <button class="ring-btn" id="ring-${deviceId}"
+            onclick="sendCmd('${oneSignalId}','${deviceId}','RING')">🔔 Ring</button>
+          <button class="stop-btn" id="stop-${deviceId}"
+            onclick="sendCmd('${oneSignalId}','${deviceId}','STOP')">🔇 Stop</button>
+        </div>
+        <div class="device-status" id="status-${deviceId}"></div>
+      `;
+      listEl.appendChild(card);
+    });
+    if (count === 0) {
+      listEl.innerHTML = '<div class="empty-msg">No devices connected.</div>';
+    }
+  });
+}
+
+// ── RING / STOP ───────────────────────────────
+// Calls OneSignal directly using key fetched from Firebase after login
+
+function sendCmd(oneSignalId, deviceId, action) {
+  const statusEl = document.getElementById("status-" + deviceId);
+  const ringBtn  = document.getElementById("ring-" + deviceId);
+  const stopBtn  = document.getElementById("stop-" + deviceId);
+
+  setStatus(statusEl, "sending", action === "RING" ? "Ringing..." : "Stopping...");
+  if (ringBtn) ringBtn.disabled = true;
+  if (stopBtn) stopBtn.disabled = true;
+
+  fetch("https://onesignal.com/api/v1/notifications", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Key " + osKey
+    },
+    body: JSON.stringify({
+      app_id: osAppId,
+      include_subscription_ids: [oneSignalId],
+      priority: 10,
+      content_available: true,
+      ttl: 30,
+      data: {
+        action: action,
+        from: "Website",
+        roomCode: ROOM,
+        timestamp: Date.now()
+      },
+      contents: { en: "Phone Finder" }
+    })
+  })
+  .then(res => {
+    if (!res.ok) throw new Error();
+    setStatus(statusEl, "ok", action === "RING" ? "Ringing! 🔔" : "Stopped. 🔇");
+    setTimeout(() => setStatus(statusEl, "", ""), 4000);
+  })
+  .catch(() => {
+    setStatus(statusEl, "error", "Failed — try again");
+    setTimeout(() => setStatus(statusEl, "", ""), 4000);
+  })
+  .finally(() => {
+    if (ringBtn) ringBtn.disabled = false;
+    if (stopBtn) stopBtn.disabled = false;
+  });
+}
+
+// ── LOGOUT ────────────────────────────────────
+
+function doLogout() {
+  if (deviceListener) {
+    db.ref("rooms/" + ROOM).off("value", deviceListener);
+    deviceListener = null;
+  }
+  osAppId = null;
+  osKey   = null;
+  auth.signOut().then(() => {
+    document.getElementById("deviceScreen").style.display = "none";
+    document.getElementById("loginScreen").style.display = "block";
+    document.getElementById("passInput").value = "";
+    document.getElementById("loginBtn").disabled = false;
+    document.getElementById("loginBtn").textContent = "Login";
+    document.getElementById("errMsg").textContent = "";
+  });
+}
+
+function setStatus(el, cls, txt) {
+  if (!el) return;
+  el.className = "device-status" + (cls ? " " + cls : "");
+  el.textContent = txt;
+}
+function esc(str) {
+  return String(str).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+</script>
+</body>
+</html>
