@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Finder</title>
+<title>Keshab</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -13,6 +13,7 @@
     align-items: center; justify-content: center; padding: 24px 16px;
   }
   .wrap { width: 100%; max-width: 400px; }
+  .version { text-align: center; color: #444; font-size: 11px; margin-bottom: 20px; }
   input[type=password] {
     width: 100%; padding: 14px 16px; font-size: 16px;
     background: #1a1a1a; border: 1px solid #2e2e2e; border-radius: 10px;
@@ -38,12 +39,11 @@
   }
   .ring-btn { background: #1d4ed8; }
   .stop-btn { background: #b91c1c; }
-  .ring-btn:disabled, .stop-btn:disabled { opacity: 0.4; cursor: default; }
   .device-status { font-size: 12px; margin-top: 8px; min-height: 16px; color: #666; }
-  .device-status.sending  { color: #facc15; }
-  .device-status.ringing  { color: #facc15; }
-  .device-status.stopped  { color: #4ade80; }
-  .device-status.error    { color: #f87171; }
+  .device-status.sending { color: #facc15; }
+  .device-status.ringing { color: #facc15; }
+  .device-status.stopped { color: #4ade80; }
+  .device-status.error   { color: #f87171; }
   .empty-msg { text-align: center; color: #555; font-size: 14px; margin-top: 40px; }
   .spinner   { text-align: center; color: #555; font-size: 14px; }
 </style>
@@ -52,6 +52,7 @@
 <div class="wrap">
 
   <div id="loginScreen">
+    <div class="version">v1.0</div>
     <input type="password" id="passInput" placeholder="Password" autocomplete="off">
     <button class="btn" id="loginBtn" onclick="doLogin()">Login</button>
     <div class="err-msg" id="errMsg"></div>
@@ -83,8 +84,6 @@ const db   = firebase.database();
 const auth = firebase.auth();
 let osAppId = null;
 let osKey   = null;
-
-const ringingDevices = {};
 const ringStatusListeners = {};
 
 function setCookie(name, value, days) {
@@ -156,7 +155,6 @@ function loadDevices() {
       db.ref("ringStatus/" + ROOM + "/" + id).off("value", ringStatusListeners[id]);
       delete ringStatusListeners[id];
     });
-
     listEl.innerHTML = "";
     if (!snap.exists()) {
       listEl.innerHTML = '<div class="empty-msg">No devices.</div>';
@@ -169,7 +167,6 @@ function loadDevices() {
       const oneSignalId = child.child("oneSignalId").val();
       if (!oneSignalId) return;
       count++;
-
       const card = document.createElement("div");
       card.className = "device-card";
       card.innerHTML = `
@@ -183,36 +180,23 @@ function loadDevices() {
         <div class="device-status" id="status-${deviceId}"></div>
       `;
       listEl.appendChild(card);
-
       listenRingStatus(deviceId);
     });
-
     if (count === 0) listEl.innerHTML = '<div class="empty-msg">No devices.</div>';
   });
 }
 
 function listenRingStatus(deviceId) {
-  const ref = db.ref("ringStatus/" + ROOM + "/" + deviceId);
-  const listener = ref.on("value", snap => {
-    const status = snap.val();
+  const listener = db.ref("ringStatus/" + ROOM + "/" + deviceId).on("value", snap => {
+    const status  = snap.val();
     const statusEl = document.getElementById("status-" + deviceId);
-    const ringBtn  = document.getElementById("ring-" + deviceId);
-    const stopBtn  = document.getElementById("stop-" + deviceId);
     if (!statusEl) return;
 
-    if (status === "RINGING") {
-      ringingDevices[deviceId] = true;
+    if (status === "ringing") {
       setStatus(statusEl, "ringing", "Ringing... 🔔");
-      if (ringBtn) ringBtn.disabled = true;
-      if (stopBtn) stopBtn.disabled = false;
-    } else if (status === "STOPPED" || status === "STOP" || !status) {
-      if (ringingDevices[deviceId]) {
-        ringingDevices[deviceId] = false;
-        setStatus(statusEl, "stopped", "Stopped 🔇");
-        setTimeout(() => setStatus(statusEl, "", ""), 3000);
-      }
-      if (ringBtn) ringBtn.disabled = false;
-      if (stopBtn) stopBtn.disabled = false;
+    } else if (status === "stopped") {
+      setStatus(statusEl, "stopped", "Stopped 🔇");
+      setTimeout(() => setStatus(statusEl, "", ""), 3000);
     }
   });
   ringStatusListeners[deviceId] = listener;
@@ -220,11 +204,6 @@ function listenRingStatus(deviceId) {
 
 function sendCmd(oneSignalId, deviceId, action) {
   const statusEl = document.getElementById("status-" + deviceId);
-  const ringBtn  = document.getElementById("ring-" + deviceId);
-  const stopBtn  = document.getElementById("stop-" + deviceId);
-
-  if (ringBtn) ringBtn.disabled = true;
-  if (stopBtn) stopBtn.disabled = true;
   setStatus(statusEl, "sending", action === "RING" ? "Sending... 🔔" : "Stopping...");
 
   fetch("https://onesignal.com/api/v1/notifications", {
@@ -245,20 +224,10 @@ function sendCmd(oneSignalId, deviceId, action) {
   })
   .then(res => {
     if (!res.ok) throw new Error();
-    if (action === "RING") {
-      setStatus(statusEl, "ringing", "Ringing... 🔔");
-    } else {
-      setStatus(statusEl, "stopped", "Stopped 🔇");
-      setTimeout(() => setStatus(statusEl, "", ""), 3000);
-      if (ringBtn) ringBtn.disabled = false;
-      if (stopBtn) stopBtn.disabled = false;
-    }
   })
   .catch(() => {
     setStatus(statusEl, "error", "Failed — try again");
     setTimeout(() => setStatus(statusEl, "", ""), 3000);
-    if (ringBtn) ringBtn.disabled = false;
-    if (stopBtn) stopBtn.disabled = false;
   });
 }
 
