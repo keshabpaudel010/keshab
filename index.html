@@ -85,6 +85,7 @@ const auth = firebase.auth();
 let osAppId = null;
 let osKey   = null;
 const ringStatusListeners = {};
+const stoppedByWebsite = {};
 
 function setCookie(name, value, days) {
   const d = new Date();
@@ -192,6 +193,7 @@ function listenRingStatus(deviceId) {
     const statusEl = document.getElementById("status-" + deviceId);
     if (!statusEl) return;
     if (status === "stopped") {
+      if (stoppedByWebsite[deviceId]) return;
       setStatus(statusEl, "stopped", "Stopped by device 🔇");
       setTimeout(() => setStatus(statusEl, "", ""), 4000);
     }
@@ -222,10 +224,15 @@ function sendCmd(oneSignalId, deviceId, action) {
   .then(res => {
     if (!res.ok) throw new Error();
     if (action === "RING") {
+      stoppedByWebsite[deviceId] = false;
       setStatus(statusEl, "ringing", "Ringing... 🔔");
     } else {
+      stoppedByWebsite[deviceId] = true;
       setStatus(statusEl, "stopped", "Stopped 🔇");
-      setTimeout(() => setStatus(statusEl, "", ""), 4000);
+      setTimeout(() => {
+        setStatus(statusEl, "", "");
+        stoppedByWebsite[deviceId] = false;
+      }, 4000);
     }
   })
   .catch(() => {
