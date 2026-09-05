@@ -52,7 +52,7 @@
 <div class="wrap">
 
   <div id="loginScreen">
-    <div class="version">v1.0</div>
+    <div class="version">v1.1</div>
     <input type="password" id="passInput" placeholder="Password" autocomplete="off">
     <button class="btn" id="loginBtn" onclick="doLogin()">Login</button>
     <div class="err-msg" id="errMsg"></div>
@@ -224,6 +224,12 @@ function sendCmd(oneSignalId, deviceId, action) {
   })
   .then(res => {
     if (!res.ok) throw new Error();
+    if (action === "RING") {
+      setStatus(statusEl, "ringing", "Ringing... 🔔");
+    } else {
+      setStatus(statusEl, "stopped", "Stopped 🔇");
+      setTimeout(() => setStatus(statusEl, "", ""), 3000);
+    }
   })
   .catch(() => {
     setStatus(statusEl, "error", "Failed — try again");
