@@ -43,6 +43,7 @@
   .device-status.sending { color: #facc15; }
   .device-status.ringing { color: #facc15; }
   .device-status.stopped { color: #4ade80; }
+  .device-status.offline { color: #f87171; }
   .device-status.error   { color: #f87171; }
   .empty-msg { text-align: center; color: #555; font-size: 14px; margin-top: 40px; }
   .spinner   { text-align: center; color: #555; font-size: 14px; }
@@ -52,7 +53,7 @@
 <div class="wrap">
 
   <div id="loginScreen">
-    <div class="version">v1.0</div>
+    <div class="version">v1.5</div>
     <input type="password" id="passInput" placeholder="Password" autocomplete="off">
     <button class="btn" id="loginBtn" onclick="doLogin()">Login</button>
     <div class="err-msg" id="errMsg"></div>
@@ -86,6 +87,7 @@ let osAppId = null;
 let osKey   = null;
 const ringStatusListeners = {};
 const stoppedByWebsite = {};
+const cooldownTimers = {};
 
 function setCookie(name, value, days) {
   const d = new Date();
@@ -175,7 +177,7 @@ function loadDevices() {
         <div class="device-btns">
           <button class="ring-btn" id="ring-${deviceId}"
             onclick="sendCmd('${oneSignalId}','${deviceId}','RING')">🔔 Ring</button>
-          <button class="stop-btn" id="stop-${deviceId}"
+          <button class="stop-btn" id="stop-${deviceId}" disabled
             onclick="sendCmd('${oneSignalId}','${deviceId}','STOP')">🔇 Stop</button>
         </div>
         <div class="device-status" id="status-${deviceId}"></div>
@@ -191,10 +193,27 @@ function listenRingStatus(deviceId) {
   const listener = db.ref("ringStatus/" + ROOM + "/" + deviceId).on("value", snap => {
     const status  = snap.val();
     const statusEl = document.getElementById("status-" + deviceId);
+    const ringBtn  = document.getElementById("ring-" + deviceId);
+    const stopBtn  = document.getElementById("stop-" + deviceId);
     if (!statusEl) return;
-    if (status === "stopped") {
+
+    if (status === "ringing") {
+      // Firebase confirmed ringing — even if was showing offline, update to ringing
+      if (cooldownTimers[deviceId + "_offline"]) {
+        clearTimeout(cooldownTimers[deviceId + "_offline"]);
+        delete cooldownTimers[deviceId + "_offline"];
+      }
+      setStatus(statusEl, "ringing", "Ringing... 🔔");
+      if (stopBtn) stopBtn.disabled = false;
+      if (ringBtn) ringBtn.disabled = true;
+    } else if (status === "stopped") {
       if (stoppedByWebsite[deviceId]) return;
       setStatus(statusEl, "stopped", "Stopped by device 🔇");
+      if (stopBtn) stopBtn.disabled = true;
+      if (ringBtn) {
+        ringBtn.disabled = false;
+        ringBtn.textContent = "🔔 Ring";
+      }
       setTimeout(() => setStatus(statusEl, "", ""), 4000);
     }
   });
@@ -203,42 +222,118 @@ function listenRingStatus(deviceId) {
 
 function sendCmd(oneSignalId, deviceId, action) {
   const statusEl = document.getElementById("status-" + deviceId);
-  setStatus(statusEl, "sending", action === "RING" ? "Sending... 🔔" : "Stopping...");
+  const ringBtn  = document.getElementById("ring-" + deviceId);
+  const stopBtn  = document.getElementById("stop-" + deviceId);
 
-  fetch("https://onesignal.com/api/v1/notifications", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": "Key " + osKey
-    },
-    body: JSON.stringify({
-      app_id: osAppId,
-      include_subscription_ids: [oneSignalId],
-      priority: 10,
-      content_available: true,
-      ttl: 30,
-      data: { action: action, from: "Website", roomCode: ROOM, timestamp: Date.now() },
-      contents: { en: "Phone Finder" }
+  if (action === "RING") {
+    if (ringBtn) ringBtn.disabled = true;
+    if (stopBtn) stopBtn.disabled = true;
+    stoppedByWebsite[deviceId] = false;
+    setStatus(statusEl, "sending", "Sending... 🔔");
+
+    fetch("https://onesignal.com/api/v1/notifications", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Key " + osKey
+      },
+      body: JSON.stringify({
+        app_id: osAppId,
+        include_subscription_ids: [oneSignalId],
+        priority: 10,
+        content_available: true,
+        ttl: 30,
+        data: { action: "RING", from: "Website", roomCode: ROOM, timestamp: Date.now() },
+        contents: { en: "Phone Finder" }
+      })
     })
-  })
-  .then(res => {
-    if (!res.ok) throw new Error();
-    if (action === "RING") {
-      stoppedByWebsite[deviceId] = false;
-      setStatus(statusEl, "ringing", "Ringing... 🔔");
-    } else {
-      stoppedByWebsite[deviceId] = true;
+    .then(res => {
+      if (!res.ok) throw new Error();
+
+      // Wait 3 seconds for Firebase to confirm ringing
+      // If no response → show offline but keep listening
+      // If Firebase later confirms ringing → auto update to Ringing
+      cooldownTimers[deviceId + "_offline"] = setTimeout(() => {
+        const currentTxt = statusEl.textContent;
+        if (!currentTxt.includes("Ringing")) {
+          setStatus(statusEl, "offline", "📴 Offline or no response");
+          if (ringBtn) ringBtn.disabled = false;
+        }
+      }, 3000);
+
+      // Start 35 second cooldown for Ring button
+      let secs = 35;
+      const interval = setInterval(() => {
+        secs--;
+        if (ringBtn && ringBtn.disabled) {
+          ringBtn.textContent = `🔔 Ring (${secs}s)`;
+        }
+        if (secs <= 0) {
+          clearInterval(interval);
+          if (ringBtn) {
+            ringBtn.disabled = false;
+            ringBtn.textContent = "🔔 Ring";
+          }
+        }
+      }, 1000);
+      cooldownTimers[deviceId] = interval;
+    })
+    .catch(() => {
+      setStatus(statusEl, "error", "Failed — try again");
+      setTimeout(() => setStatus(statusEl, "", ""), 3000);
+      if (ringBtn) ringBtn.disabled = false;
+    });
+
+  } else {
+    // STOP
+    stoppedByWebsite[deviceId] = true;
+    if (stopBtn) stopBtn.disabled = true;
+    setStatus(statusEl, "sending", "Stopping...");
+
+    // Clear cooldown
+    if (cooldownTimers[deviceId]) {
+      clearInterval(cooldownTimers[deviceId]);
+      delete cooldownTimers[deviceId];
+    }
+    if (cooldownTimers[deviceId + "_offline"]) {
+      clearTimeout(cooldownTimers[deviceId + "_offline"]);
+      delete cooldownTimers[deviceId + "_offline"];
+    }
+    if (ringBtn) {
+      ringBtn.disabled = false;
+      ringBtn.textContent = "🔔 Ring";
+    }
+
+    fetch("https://onesignal.com/api/v1/notifications", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Key " + osKey
+      },
+      body: JSON.stringify({
+        app_id: osAppId,
+        include_subscription_ids: [oneSignalId],
+        priority: 10,
+        content_available: true,
+        ttl: 30,
+        data: { action: "STOP", from: "Website", roomCode: ROOM, timestamp: Date.now() },
+        contents: { en: "Phone Finder" }
+      })
+    })
+    .then(res => {
+      if (!res.ok) throw new Error();
       setStatus(statusEl, "stopped", "Stopped 🔇");
       setTimeout(() => {
         setStatus(statusEl, "", "");
         stoppedByWebsite[deviceId] = false;
       }, 4000);
-    }
-  })
-  .catch(() => {
-    setStatus(statusEl, "error", "Failed — try again");
-    setTimeout(() => setStatus(statusEl, "", ""), 3000);
-  });
+    })
+    .catch(() => {
+      setStatus(statusEl, "error", "Failed — try again");
+      setTimeout(() => setStatus(statusEl, "", ""), 3000);
+      stoppedByWebsite[deviceId] = false;
+    });
+  }
 }
 
 function setStatus(el, cls, txt) {
