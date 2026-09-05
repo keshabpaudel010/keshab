@@ -53,7 +53,7 @@
 <div class="wrap">
 
   <div id="loginScreen">
-    <div class="version">v2.0</div>
+    <div class="version">v1.6</div>
     <input type="password" id="passInput" placeholder="Password" autocomplete="off">
     <button class="btn" id="loginBtn" onclick="doLogin()">Login</button>
     <div class="err-msg" id="errMsg"></div>
@@ -85,10 +85,11 @@ const db   = firebase.database();
 const auth = firebase.auth();
 let osAppId = null;
 let osKey   = null;
+
 const ringStatusListeners = {};
 const stoppedByWebsite = {};
-const cooldownTimers = {};
 const deviceState = {};
+const timers = {};
 
 function setCookie(name, value, days) {
   const d = new Date();
@@ -190,52 +191,51 @@ function loadDevices() {
   });
 }
 
-function listenRingStatus(deviceId) {
-  const listener = db.ref("ringStatus/" + ROOM + "/" + deviceId).on("value", snap => {
-    const status  = snap.val();
-    const statusEl = document.getElementById("status-" + deviceId);
-    const ringBtn  = document.getElementById("ring-" + deviceId);
-    const stopBtn  = document.getElementById("stop-" + deviceId);
-    if (!statusEl) return;
-
-    if (status === "ringing") {
-      // Clear offline timer
-      clearTimeout(cooldownTimers[deviceId + "_offline"]);
-      delete cooldownTimers[deviceId + "_offline"];
-      deviceState[deviceId] = "ringing";
-      setStatus(statusEl, "ringing", "Ringing... 🔔");
-      if (stopBtn) stopBtn.disabled = false;
-    } else if (status === "stopped") {
-      if (stoppedByWebsite[deviceId]) return;
-      // Stopped from device
-      deviceState[deviceId] = "idle";
-      clearAllTimers(deviceId);
-      setStatus(statusEl, "stopped", "Stopped by device 🔇");
-      if (stopBtn) stopBtn.disabled = true;
-      if (ringBtn) { ringBtn.disabled = false; ringBtn.textContent = "🔔 Ring"; }
-      setTimeout(() => setStatus(statusEl, "", ""), 4000);
-    }
-  });
-  ringStatusListeners[deviceId] = listener;
+function getT(deviceId) {
+  if (!timers[deviceId]) timers[deviceId] = {};
+  return timers[deviceId];
+}
+function clearOffline(deviceId) {
+  const t = getT(deviceId);
+  if (t.offline) { clearTimeout(t.offline); t.offline = null; }
+}
+function clearCountdown(deviceId) {
+  const t = getT(deviceId);
+  if (t.countdown) { clearInterval(t.countdown); t.countdown = null; }
+}
+function clearPendingClear(deviceId) {
+  const t = getT(deviceId);
+  if (t.clear) { clearTimeout(t.clear); t.clear = null; }
+}
+function clearAllTimers(deviceId) {
+  clearOffline(deviceId);
+  clearCountdown(deviceId);
+  clearPendingClear(deviceId);
 }
 
-function clearAllTimers(deviceId) {
-  clearTimeout(cooldownTimers[deviceId + "_offline"]);
-  clearInterval(cooldownTimers[deviceId + "_countdown"]);
-  delete cooldownTimers[deviceId + "_offline"];
-  delete cooldownTimers[deviceId + "_countdown"];
+function showStatus(deviceId, cls, txt, autoClearMs, onClear) {
+  const statusEl = document.getElementById("status-" + deviceId);
+  if (!statusEl) return;
+  clearPendingClear(deviceId);
+  setStatus(statusEl, cls, txt);
+  if (autoClearMs) {
+    getT(deviceId).clear = setTimeout(() => {
+      setStatus(statusEl, "", "");
+      getT(deviceId).clear = null;
+      if (onClear) onClear();
+    }, autoClearMs);
+  }
 }
 
 function startCooldown(deviceId, ringBtn) {
-  clearAllTimers(deviceId);
+  clearCountdown(deviceId);
   let secs = 35;
   ringBtn.disabled = true;
   ringBtn.textContent = `🔔 Ring (${secs}s)`;
-  cooldownTimers[deviceId + "_countdown"] = setInterval(() => {
+  getT(deviceId).countdown = setInterval(() => {
     secs--;
     if (secs <= 0) {
-      clearInterval(cooldownTimers[deviceId + "_countdown"]);
-      delete cooldownTimers[deviceId + "_countdown"];
+      clearCountdown(deviceId);
       ringBtn.disabled = false;
       ringBtn.textContent = "🔔 Ring";
     } else {
@@ -244,16 +244,39 @@ function startCooldown(deviceId, ringBtn) {
   }, 1000);
 }
 
+function listenRingStatus(deviceId) {
+  const listener = db.ref("ringStatus/" + ROOM + "/" + deviceId).on("value", snap => {
+    const status  = snap.val();
+    const ringBtn = document.getElementById("ring-" + deviceId);
+    const stopBtn = document.getElementById("stop-" + deviceId);
+
+    if (status === "ringing") {
+      clearOffline(deviceId);
+      deviceState[deviceId] = "ringing";
+      showStatus(deviceId, "ringing", "Ringing... 🔔");
+      if (stopBtn) stopBtn.disabled = false;
+
+    } else if (status === "stopped") {
+      if (stoppedByWebsite[deviceId]) return;
+      deviceState[deviceId] = "idle";
+      clearAllTimers(deviceId);
+      if (stopBtn) stopBtn.disabled = true;
+      if (ringBtn) { ringBtn.disabled = false; ringBtn.textContent = "🔔 Ring"; }
+      showStatus(deviceId, "stopped", "Stopped by device 🔇", 4000);
+    }
+  });
+  ringStatusListeners[deviceId] = listener;
+}
+
 function sendCmd(oneSignalId, deviceId, action) {
-  const statusEl = document.getElementById("status-" + deviceId);
-  const ringBtn  = document.getElementById("ring-" + deviceId);
-  const stopBtn  = document.getElementById("stop-" + deviceId);
+  const ringBtn = document.getElementById("ring-" + deviceId);
+  const stopBtn = document.getElementById("stop-" + deviceId);
 
   if (action === "RING") {
     stoppedByWebsite[deviceId] = false;
     deviceState[deviceId] = "sending";
     if (stopBtn) stopBtn.disabled = true;
-    setStatus(statusEl, "sending", "Sending... 🔔");
+    showStatus(deviceId, "sending", "Sending... 🔔");
 
     fetch("https://onesignal.com/api/v1/notifications", {
       method: "POST",
@@ -268,31 +291,28 @@ function sendCmd(oneSignalId, deviceId, action) {
     })
     .then(res => {
       if (!res.ok) throw new Error();
-      // Start 35s cooldown — clears any old timers first
       startCooldown(deviceId, ringBtn);
-      // THEN set offline timer (after clearAllTimers in startCooldown)
-      cooldownTimers[deviceId + "_offline"] = setTimeout(() => {
+      clearOffline(deviceId);
+      getT(deviceId).offline = setTimeout(() => {
         if (deviceState[deviceId] === "sending") {
           deviceState[deviceId] = "offline";
-          setStatus(statusEl, "offline", "📴 Offline or no response");
+          showStatus(deviceId, "offline", "📴 Offline or no response");
         }
       }, 3000);
     })
     .catch(() => {
       clearAllTimers(deviceId);
-      setStatus(statusEl, "error", "Failed — try again");
-      setTimeout(() => setStatus(statusEl, "", ""), 3000);
+      showStatus(deviceId, "error", "Failed — try again", 3000);
       if (ringBtn) { ringBtn.disabled = false; ringBtn.textContent = "🔔 Ring"; }
     });
 
   } else {
-    // STOP
     stoppedByWebsite[deviceId] = true;
     deviceState[deviceId] = "idle";
     clearAllTimers(deviceId);
     if (stopBtn) stopBtn.disabled = true;
     if (ringBtn) { ringBtn.disabled = false; ringBtn.textContent = "🔔 Ring"; }
-    setStatus(statusEl, "sending", "Stopping...");
+    showStatus(deviceId, "sending", "Stopping...");
 
     fetch("https://onesignal.com/api/v1/notifications", {
       method: "POST",
@@ -307,15 +327,12 @@ function sendCmd(oneSignalId, deviceId, action) {
     })
     .then(res => {
       if (!res.ok) throw new Error();
-      setStatus(statusEl, "stopped", "Stopped 🔇");
-      setTimeout(() => {
-        setStatus(statusEl, "", "");
+      showStatus(deviceId, "stopped", "Stopped 🔇", 4000, () => {
         stoppedByWebsite[deviceId] = false;
-      }, 4000);
+      });
     })
     .catch(() => {
-      setStatus(statusEl, "error", "Failed — try again");
-      setTimeout(() => setStatus(statusEl, "", ""), 3000);
+      showStatus(deviceId, "error", "Failed — try again", 3000);
       stoppedByWebsite[deviceId] = false;
     });
   }
