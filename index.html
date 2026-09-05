@@ -52,7 +52,7 @@
 <div class="wrap">
 
   <div id="loginScreen">
-    <div class="version">v1.1</div>
+    <div class="version">v1.0</div>
     <input type="password" id="passInput" placeholder="Password" autocomplete="off">
     <button class="btn" id="loginBtn" onclick="doLogin()">Login</button>
     <div class="err-msg" id="errMsg"></div>
@@ -191,12 +191,9 @@ function listenRingStatus(deviceId) {
     const status  = snap.val();
     const statusEl = document.getElementById("status-" + deviceId);
     if (!statusEl) return;
-
-    if (status === "ringing") {
-      setStatus(statusEl, "ringing", "Ringing... 🔔");
-    } else if (status === "stopped") {
-      setStatus(statusEl, "stopped", "Stopped 🔇");
-      setTimeout(() => setStatus(statusEl, "", ""), 3000);
+    if (status === "stopped") {
+      setStatus(statusEl, "stopped", "Stopped by device 🔇");
+      setTimeout(() => setStatus(statusEl, "", ""), 4000);
     }
   });
   ringStatusListeners[deviceId] = listener;
@@ -228,7 +225,7 @@ function sendCmd(oneSignalId, deviceId, action) {
       setStatus(statusEl, "ringing", "Ringing... 🔔");
     } else {
       setStatus(statusEl, "stopped", "Stopped 🔇");
-      setTimeout(() => setStatus(statusEl, "", ""), 3000);
+      setTimeout(() => setStatus(statusEl, "", ""), 4000);
     }
   })
   .catch(() => {
