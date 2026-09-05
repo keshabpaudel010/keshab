@@ -268,11 +268,12 @@ function sendCmd(oneSignalId, deviceId, action) {
     })
     .then(res => {
       if (!res.ok) throw new Error();
-      // Start 35s cooldown on ring button
+      // Start 35s cooldown — clears any old timers first
       startCooldown(deviceId, ringBtn);
-      // After 3s no Firebase response → show offline but keep listening
+      // THEN set offline timer (after clearAllTimers in startCooldown)
       cooldownTimers[deviceId + "_offline"] = setTimeout(() => {
-        if (deviceState[deviceId] !== "ringing") {
+        if (deviceState[deviceId] === "sending") {
+          deviceState[deviceId] = "offline";
           setStatus(statusEl, "offline", "📴 Offline or no response");
         }
       }, 3000);
