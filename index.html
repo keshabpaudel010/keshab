@@ -415,7 +415,7 @@ function sendCmd(oneSignalId, deviceId, action) {
     stoppedByWebsite[deviceId] = false;
     deviceState[deviceId] = "sending";
     if (stopBtn) stopBtn.disabled = true;
-    showStatus(deviceId, "sending", "Sending... 🔔");
+    showStatus(deviceId, "sending", "Sending... (may take up to 10s) 🔔");
 
     fetch("https://onesignal.com/api/v1/notifications", {
       method: "POST",
@@ -438,7 +438,7 @@ function sendCmd(oneSignalId, deviceId, action) {
           showStatus(deviceId, "offline", "📴 Offline or no response");
           soundError();
         }
-      }, 3000);
+      }, 5000);
     })
     .catch(() => {
       clearAllTimers(deviceId);
