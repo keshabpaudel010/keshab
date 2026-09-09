@@ -1693,7 +1693,13 @@ function listenRingStatus(
 
               updateHistoryFields(
                 deviceId,
-                { response: "Ringing 🔔" }
+                {
+                  response: "Ringing 🔔",
+
+                  ringingTime:
+                    new Date()
+                      .toLocaleTimeString()
+                }
               );
 
             }
@@ -1773,7 +1779,11 @@ function listenRingStatus(
                     formatDuration(
                       Date.now() -
                       startedAt
-                    )
+                    ),
+
+                  stoppedTime:
+                    new Date()
+                      .toLocaleTimeString()
                 }
               );
 
@@ -1781,7 +1791,14 @@ function listenRingStatus(
 
               updateHistoryFields(
                 deviceId,
-                { stoppedBy: "Stopped by device" }
+                {
+                  stoppedBy:
+                    "Stopped by device",
+
+                  stoppedTime:
+                    new Date()
+                      .toLocaleTimeString()
+                }
               );
 
             }
@@ -1851,7 +1868,16 @@ function startHistoryEntry(
     response:
       null,
 
+    responseTime:
+      null,
+
+    ringingTime:
+      null,
+
     stoppedBy:
+      null,
+
+    stoppedTime:
       null,
 
     duration:
@@ -1966,8 +1992,17 @@ function renderHistoryEntries(panel, snap) {
           response:
             value.response,
 
+          responseTime:
+            value.responseTime,
+
+          ringingTime:
+            value.ringingTime,
+
           stoppedBy:
             value.stoppedBy,
+
+          stoppedTime:
+            value.stoppedTime,
 
           duration:
             value.duration,
@@ -2023,7 +2058,11 @@ function renderHistoryEntries(panel, snap) {
 
       let linesHtml = `
         <div class="history-line history-line-click">
-          🔔 Ring clicked
+          🔔 Ring clicked ${
+            entry.clickedTime
+              ? "— " + esc(entry.clickedTime)
+              : ""
+          }
         </div>
       `;
 
@@ -2040,13 +2079,23 @@ function renderHistoryEntries(panel, snap) {
             );
 
 
+        const respTime =
+          entry.ringingTime ||
+          entry.responseTime ||
+          "";
+
+
         linesHtml += `
           <div class="history-line ${
             isOffline
               ? "history-line-offline"
               : "history-line-response"
           }">
-            ${esc(entry.response)}
+            ${esc(entry.response)}${
+              respTime
+                ? " — " + esc(respTime)
+                : ""
+            }
           </div>
         `;
 
@@ -2059,7 +2108,11 @@ function renderHistoryEntries(panel, snap) {
 
         linesHtml += `
           <div class="history-line history-line-stopped">
-            ${esc(entry.stoppedBy)}
+            ${esc(entry.stoppedBy)}${
+              entry.stoppedTime
+                ? " — " + esc(entry.stoppedTime)
+                : ""
+            }
           </div>
         `;
 
@@ -2077,26 +2130,6 @@ function renderHistoryEntries(panel, snap) {
         `;
 
       }
-
-
-      // Bottom: time
-
-      const time =
-        entry.clickedTime ||
-        (
-          entry.timestamp
-            ? new Date(
-                entry.timestamp
-              ).toLocaleString()
-            : ""
-        );
-
-
-      linesHtml += `
-        <div class="history-time">
-          ${esc(time)}
-        </div>
-      `;
 
 
       card.innerHTML =
@@ -2490,7 +2523,13 @@ function sendCmd(
 
                       updateHistoryFields(
                         deviceId,
-                        { response: "Offline - no response" }
+                        {
+                          response: "Offline - no response",
+
+                          responseTime:
+                            new Date()
+                              .toLocaleTimeString()
+                        }
                       );
 
 
@@ -2703,7 +2742,11 @@ function sendCmd(
               formatDuration(
                 Date.now() -
                 startedAt
-              )
+              ),
+
+            stoppedTime:
+              new Date()
+                .toLocaleTimeString()
           }
         );
 
@@ -2711,7 +2754,14 @@ function sendCmd(
 
         updateHistoryFields(
           deviceId,
-          { stoppedBy: "Stopped by you" }
+          {
+            stoppedBy:
+              "Stopped by you",
+
+            stoppedTime:
+              new Date()
+                .toLocaleTimeString()
+          }
         );
 
       }
