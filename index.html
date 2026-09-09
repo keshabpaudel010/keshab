@@ -671,9 +671,6 @@ function displayDeviceName(rawId, fallbackName) {
   if (rawId && DEVICE_NAME_OVERRIDES[rawId]) {
     return DEVICE_NAME_OVERRIDES[rawId];
   }
-  if (fallbackName && DEVICE_NAME_OVERRIDES[fallbackName]) {
-    return DEVICE_NAME_OVERRIDES[fallbackName];
-  }
   return fallbackName;
 }
 
@@ -1734,40 +1731,7 @@ function logHistory(
   outcome
 ) {
 
-  const nameEl =
-    document.getElementById(
-      "name-" +
-      deviceId
-    );
-
-
-  let deviceName =
-    deviceId;
-
-
-  if (nameEl) {
-
-    deviceName =
-      nameEl.textContent
-        .replace(/^📱\s*/, "")
-        .trim();
-
-  }
-
-  deviceName =
-    displayDeviceName(
-      deviceId,
-      deviceName
-    );
-
-
   const historyData = {
-
-    deviceId:
-      deviceId,
-
-    deviceName:
-      deviceName,
 
     outcome:
       outcome,
@@ -1847,12 +1811,6 @@ function renderHistoryEntries(panel, snap) {
           key:
             child.key,
 
-          deviceId:
-            value.deviceId,
-
-          deviceName:
-            value.deviceName,
-
           outcome:
             value.outcome,
 
@@ -1921,15 +1879,6 @@ function renderHistoryEntries(panel, snap) {
           );
 
 
-      const deviceName =
-        displayDeviceName(
-          entry.deviceId,
-          entry.deviceName ||
-            entry.deviceId ||
-            "Unknown"
-        );
-
-
       const time =
         entry.time ||
         (
@@ -1942,10 +1891,6 @@ function renderHistoryEntries(panel, snap) {
 
 
       row.innerHTML = `
-
-        <div class="history-device">
-          ${esc(deviceName)}
-        </div>
 
         <div class="${
           isOffline
@@ -2104,6 +2049,12 @@ function sendCmd(
   ) {
 
     soundRing();
+
+
+    logHistory(
+      deviceId,
+      "Ring clicked"
+    );
 
 
     stoppedByWebsite[
