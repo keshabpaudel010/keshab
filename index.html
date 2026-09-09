@@ -148,13 +148,15 @@
 <div class="wrap">
 
   <div id="loginScreen">
-    <div class="version"><span class="version-badge">v1.8</span></div>
+    <div class="version"><span class="version-badge">v1.7</span></div>
     <input type="password" id="passInput" placeholder="Password" autocomplete="off">
     <button class="btn" id="loginBtn" onclick="doLogin()">Login</button>
     <div class="err-msg" id="errMsg"></div>
   </div>
 
   <div id="deviceScreen" style="display:none;">
+    <button class="btn" style="background:#555; margin-bottom:16px;" onclick="toggleHistory()">📜 History</button>
+    <div id="historyPanel" style="display:none; max-height:300px; overflow-y:auto; margin-bottom:16px; background:#1a1a1a; border-radius:8px; padding:10px;"></div>
     <div id="deviceList"></div>
   </div>
 
@@ -385,13 +387,24 @@ function listenRingStatus(deviceId) {
     const ringBtn = document.getElementById("ring-" + deviceId);
     const stopBtn = document.getElementById("stop-" + deviceId);
 
-    if (status === "ringing") {
+    if (status === "online") {
+      // Phone confirmed it received the push, alarm hasn't started yet
+      if (deviceState[deviceId] === "sending") {
+        clearOffline(deviceId);   // no longer counts as "no response"
+        deviceState[deviceId] = "online";
+        showStatus(deviceId, "sending", "Device is online...\nDevice is ringing now...");
+      }
+
+    } else if (status === "ringing") {
       const wasRinging = deviceState[deviceId] === "ringing";
       clearOffline(deviceId);
       deviceState[deviceId] = "ringing";
-      showStatus(deviceId, "ringing", "Ringing... 🔔");
+      showStatus(deviceId, "ringing", "Device is online...\nDevice is ringing now 🔔");
       if (stopBtn) stopBtn.disabled = false;
-      if (!wasRinging) soundSuccess();
+      if (!wasRinging) {
+        soundSuccess();
+        logHistory(deviceId, "Ringed successfully");
+      }
 
     } else if (status === "stopped") {
       if (stoppedByWebsite[deviceId]) return;
@@ -404,6 +417,47 @@ function listenRingStatus(deviceId) {
     }
   });
   ringStatusListeners[deviceId] = listener;
+}
+
+// Saves every ring attempt to Firebase - viewable in the History panel
+function logHistory(deviceId, outcome) {
+  const deviceName = document.getElementById("name-" + deviceId)?.textContent || deviceId;
+  db.ref("ringHistory/" + ROOM).push({
+    deviceId: deviceId,
+    deviceName: deviceName,
+    outcome: outcome,
+    timestamp: Date.now(),
+    time: new Date().toLocaleString()
+  });
+}
+
+let historyLoaded = false;
+function toggleHistory() {
+  const panel = document.getElementById("historyPanel");
+  const isOpen = panel.style.display === "block";
+  panel.style.display = isOpen ? "none" : "block";
+  if (!isOpen && !historyLoaded) {
+    historyLoaded = true;
+    db.ref("ringHistory/" + ROOM).orderByChild("timestamp").limitToLast(50).on("value", snap => {
+      panel.innerHTML = "";
+      const entries = [];
+      snap.forEach(child => entries.push(child.val()));
+      entries.reverse().forEach(entry => {
+        const row = document.createElement("div");
+        row.style.cssText = "padding:8px 0; border-bottom:1px solid #333; font-size:13px;";
+        const isOffline = (entry.outcome || "").toLowerCase().includes("offline");
+        row.innerHTML = `
+          <div style="color:#fff;">${entry.deviceName || entry.deviceId}</div>
+          <div style="color:${isOffline ? '#ff6b6b' : '#4CAF50'};">${entry.outcome}</div>
+          <div style="color:#888;">${entry.time}</div>
+        `;
+        panel.appendChild(row);
+      });
+      if (entries.length === 0) {
+        panel.innerHTML = '<div style="color:#888; text-align:center;">No history yet.</div>';
+      }
+    });
+  }
 }
 
 function sendCmd(oneSignalId, deviceId, action) {
@@ -434,9 +488,17 @@ function sendCmd(oneSignalId, deviceId, action) {
       clearOffline(deviceId);
       getT(deviceId).offline = setTimeout(() => {
         if (deviceState[deviceId] === "sending") {
-          deviceState[deviceId] = "offline";
-          showStatus(deviceId, "offline", "📴 Offline or no response");
-          soundError();
+          // First check at 5s - not confirmed offline yet, just still waiting
+          showStatus(deviceId, "sending", "Still trying... checking again 🔔");
+          getT(deviceId).offline = setTimeout(() => {
+            if (deviceState[deviceId] === "sending") {
+              // Second check at 10s total - now confirmed offline
+              deviceState[deviceId] = "offline";
+              showStatus(deviceId, "offline", "📴 Offline or no response");
+              logHistory(deviceId, "Device offline - ring did not happen");
+              soundError();
+            }
+          }, 5000);
         }
       }, 5000);
     })
@@ -484,6 +546,7 @@ function sendCmd(oneSignalId, deviceId, action) {
 function setStatus(el, cls, txt) {
   if (!el) return;
   el.className = "device-status" + (cls ? " " + cls : "");
+  el.style.whiteSpace = "pre-line";   // makes \n actually break the line
   el.textContent = txt;
 }
 function esc(str) {
