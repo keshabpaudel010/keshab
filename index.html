@@ -586,7 +586,7 @@
 
     <div class="version">
       <span class="version-badge">
-        v2.0
+        v1.7
       </span>
     </div>
 
@@ -706,6 +706,9 @@ let osKey = null;
 const ringStatusListeners = {};
 
 let historyListener = null;
+
+const historyKeys = {};
+const ringStartTimes = {};
 
 const stoppedByWebsite = {};
 
@@ -1646,9 +1649,14 @@ function listenRingStatus(
               soundSuccess();
 
 
-              logHistory(
+              ringStartTimes[
+                deviceId
+              ] = Date.now();
+
+
+              updateHistoryEntry(
                 deviceId,
-                "Ringed successfully"
+                "Ringing 🔔"
               );
 
             }
@@ -1709,6 +1717,39 @@ function listenRingStatus(
 
             soundStop();
 
+
+            const startedAt =
+              ringStartTimes[
+                deviceId
+              ];
+
+
+            if (startedAt) {
+
+              updateHistoryEntry(
+                deviceId,
+                "Stopped by device (rang for " +
+                  formatDuration(
+                    Date.now() -
+                    startedAt
+                  ) +
+                  ")"
+              );
+
+            } else {
+
+              updateHistoryEntry(
+                deviceId,
+                "Stopped by device"
+              );
+
+            }
+
+
+            ringStartTimes[
+              deviceId
+            ] = null;
+
           }
 
         }
@@ -1726,7 +1767,37 @@ function listenRingStatus(
 // SAVE HISTORY
 // ============================================================
 
-function logHistory(
+function formatDuration(ms) {
+
+  const totalSeconds =
+    Math.max(
+      0,
+      Math.round(ms / 1000)
+    );
+
+
+  if (totalSeconds < 60) {
+
+    return totalSeconds + "s";
+
+  }
+
+
+  const mins =
+    Math.floor(
+      totalSeconds / 60
+    );
+
+  const secs =
+    totalSeconds % 60;
+
+
+  return mins + "m " + secs + "s";
+
+}
+
+
+function startHistoryEntry(
   deviceId,
   outcome
 ) {
@@ -1746,33 +1817,79 @@ function logHistory(
   };
 
 
-  console.log(
-    "Saving history:",
-    historyData
-  );
+  const ref =
+    db
+      .ref(
+        "ringHistory/" +
+        ROOM
+      )
+      .push();
+
+
+  historyKeys[deviceId] =
+    ref.key;
+
+
+  ref
+    .set(historyData)
+
+    .catch(error => {
+
+      console.error(
+        "History save error:",
+        error
+      );
+
+    });
+
+}
+
+
+function updateHistoryEntry(
+  deviceId,
+  outcome
+) {
+
+  const key =
+    historyKeys[deviceId];
+
+
+  if (!key) {
+
+    // No open entry to update — create a fresh one instead
+
+    startHistoryEntry(
+      deviceId,
+      outcome
+    );
+
+    return;
+
+  }
 
 
   db
     .ref(
       "ringHistory/" +
-      ROOM
+      ROOM +
+      "/" +
+      key
     )
-    .push(
-      historyData
-    )
+    .update({
 
-    .then(() => {
+      outcome:
+        outcome,
 
-      console.log(
-        "History saved successfully."
-      );
+      time:
+        new Date()
+          .toLocaleString()
 
     })
 
     .catch(error => {
 
       console.error(
-        "History save error:",
+        "History update error:",
         error
       );
 
@@ -2051,7 +2168,12 @@ function sendCmd(
     soundRing();
 
 
-    logHistory(
+    ringStartTimes[
+      deviceId
+    ] = null;
+
+
+    startHistoryEntry(
       deviceId,
       "Ring clicked"
     );
@@ -2207,9 +2329,9 @@ function sendCmd(
                       );
 
 
-                      logHistory(
+                      updateHistoryEntry(
                         deviceId,
-                        "Device offline - ring did not happen"
+                        "Offline - ring did not happen"
                       );
 
 
@@ -2402,6 +2524,39 @@ function sendCmd(
 
         }
       );
+
+
+      const startedAt =
+        ringStartTimes[
+          deviceId
+        ];
+
+
+      if (startedAt) {
+
+        updateHistoryEntry(
+          deviceId,
+          "Stopped by you (rang for " +
+            formatDuration(
+              Date.now() -
+              startedAt
+            ) +
+            ")"
+        );
+
+      } else {
+
+        updateHistoryEntry(
+          deviceId,
+          "Stopped by you"
+        );
+
+      }
+
+
+      ringStartTimes[
+        deviceId
+      ] = null;
 
     })
 
