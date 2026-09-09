@@ -661,6 +661,22 @@ const FIREBASE_APP_ID =
 
 const ROOM = "0001";
 
+// Manual overrides: map raw deviceId -> friendly display name.
+// Add more lines here in the same format if you get more devices.
+const DEVICE_NAME_OVERRIDES = {
+  "a97ab1443ced2704": "Keshab"
+};
+
+function displayDeviceName(rawId, fallbackName) {
+  if (rawId && DEVICE_NAME_OVERRIDES[rawId]) {
+    return DEVICE_NAME_OVERRIDES[rawId];
+  }
+  if (fallbackName && DEVICE_NAME_OVERRIDES[fallbackName]) {
+    return DEVICE_NAME_OVERRIDES[fallbackName];
+  }
+  return fallbackName;
+}
+
 
 firebase.initializeApp({
 
@@ -691,6 +707,8 @@ let osKey = null;
 
 
 const ringStatusListeners = {};
+
+let historyListener = null;
 
 const stoppedByWebsite = {};
 
@@ -1200,11 +1218,17 @@ function loadDevices() {
             child.key;
 
 
-          const name =
+          let name =
             child
               .child("name")
               .val() ||
             "Unknown";
+
+          name =
+            displayDeviceName(
+              deviceId,
+              name
+            );
 
 
           const oneSignalId =
@@ -1730,6 +1754,12 @@ function logHistory(
 
   }
 
+  deviceName =
+    displayDeviceName(
+      deviceId,
+      deviceName
+    );
+
 
   const historyData = {
 
@@ -1791,6 +1821,157 @@ function logHistory(
 // LOAD / TOGGLE HISTORY
 // ============================================================
 
+function renderHistoryEntries(panel, snap) {
+
+  panel.innerHTML = "";
+
+
+  const entries = [];
+
+
+  snap.forEach(
+    child => {
+
+      const value =
+        child.val();
+
+
+      if (
+        value &&
+        typeof value ===
+        "object"
+      ) {
+
+        entries.push({
+
+          key:
+            child.key,
+
+          deviceId:
+            value.deviceId,
+
+          deviceName:
+            value.deviceName,
+
+          outcome:
+            value.outcome,
+
+          timestamp:
+            value.timestamp,
+
+          time:
+            value.time
+
+        });
+
+      }
+
+    }
+  );
+
+
+  // Newest first
+
+  entries.sort(
+    (a, b) =>
+      (b.timestamp || 0) -
+      (a.timestamp || 0)
+  );
+
+
+  // EMPTY
+
+  if (
+    entries.length === 0
+  ) {
+
+    panel.innerHTML =
+      '<div class="history-empty">No history yet.</div>';
+
+    return;
+
+  }
+
+
+  // DISPLAY ALL ENTRIES
+
+  entries.forEach(
+    entry => {
+
+      const row =
+        document.createElement(
+          "div"
+        );
+
+
+      row.className =
+        "history-row";
+
+
+      const outcome =
+        entry.outcome ||
+        "";
+
+
+      const isOffline =
+        outcome
+          .toLowerCase()
+          .includes(
+            "offline"
+          );
+
+
+      const deviceName =
+        displayDeviceName(
+          entry.deviceId,
+          entry.deviceName ||
+            entry.deviceId ||
+            "Unknown"
+        );
+
+
+      const time =
+        entry.time ||
+        (
+          entry.timestamp
+            ? new Date(
+                entry.timestamp
+              ).toLocaleString()
+            : ""
+        );
+
+
+      row.innerHTML = `
+
+        <div class="history-device">
+          ${esc(deviceName)}
+        </div>
+
+        <div class="${
+          isOffline
+            ? "history-outcome-offline"
+            : "history-outcome-success"
+        }">
+          ${esc(outcome)}
+        </div>
+
+        <div class="history-time">
+          ${esc(time)}
+        </div>
+
+      `;
+
+
+      panel.appendChild(
+        row
+      );
+
+    }
+  );
+
+}
+
+
 function toggleHistory() {
 
   const panel =
@@ -1804,19 +1985,41 @@ function toggleHistory() {
     "block";
 
 
-  // CLOSE
+  // CLOSE — detach the live listener so it's not running in the background
 
   if (isOpen) {
 
     panel.style.display =
       "none";
 
+
+    if (historyListener) {
+
+      db
+        .ref(
+          "ringHistory/" +
+          ROOM
+        )
+        .orderByChild(
+          "timestamp"
+        )
+        .limitToLast(50)
+        .off(
+          "value",
+          historyListener
+        );
+
+      historyListener = null;
+
+    }
+
+
     return;
 
   }
 
 
-  // OPEN
+  // OPEN — attach a live listener so new entries appear automatically
 
   panel.style.display =
     "block";
@@ -1826,191 +2029,44 @@ function toggleHistory() {
     '<div class="history-loading">Loading history...</div>';
 
 
-  console.log(
-    "Loading:",
-    "ringHistory/" + ROOM
-  );
+  const historyRef =
+    db
+      .ref(
+        "ringHistory/" +
+        ROOM
+      )
+      .orderByChild(
+        "timestamp"
+      )
+      .limitToLast(50);
 
 
-  db
-    .ref(
-      "ringHistory/" +
-      ROOM
-    )
+  historyListener =
+    historyRef.on(
+      "value",
 
-    .orderByChild(
-      "timestamp"
-    )
+      snap => {
 
-    .limitToLast(50)
+        renderHistoryEntries(
+          panel,
+          snap
+        );
 
-    .once("value")
+      },
 
-    .then(snap => {
+      error => {
 
-      panel.innerHTML = "";
+        console.error(
+          "History loading error:",
+          error
+        );
 
-
-      const entries = [];
-
-
-      snap.forEach(
-        child => {
-
-          const value =
-            child.val();
-
-
-          if (
-            value &&
-            typeof value ===
-            "object"
-          ) {
-
-            entries.push({
-
-              key:
-                child.key,
-
-              deviceId:
-                value.deviceId,
-
-              deviceName:
-                value.deviceName,
-
-              outcome:
-                value.outcome,
-
-              timestamp:
-                value.timestamp,
-
-              time:
-                value.time
-
-            });
-
-          }
-
-        }
-      );
-
-
-      // Newest first
-
-      entries.sort(
-        (a, b) =>
-          (b.timestamp || 0) -
-          (a.timestamp || 0)
-      );
-
-
-      console.log(
-        "History entries:",
-        entries
-      );
-
-
-      // EMPTY
-
-      if (
-        entries.length === 0
-      ) {
 
         panel.innerHTML =
-          '<div class="history-empty">No history yet.</div>';
-
-        return;
+          '<div class="history-error">Failed to load history.</div>';
 
       }
-
-
-      // DISPLAY ALL ENTRIES
-
-      entries.forEach(
-        entry => {
-
-          const row =
-            document.createElement(
-              "div"
-            );
-
-
-          row.className =
-            "history-row";
-
-
-          const outcome =
-            entry.outcome ||
-            "";
-
-
-          const isOffline =
-            outcome
-              .toLowerCase()
-              .includes(
-                "offline"
-              );
-
-
-          const deviceName =
-            entry.deviceName ||
-            entry.deviceId ||
-            "Unknown";
-
-
-          const time =
-            entry.time ||
-            (
-              entry.timestamp
-                ? new Date(
-                    entry.timestamp
-                  ).toLocaleString()
-                : ""
-            );
-
-
-          row.innerHTML = `
-
-            <div class="history-device">
-              ${esc(deviceName)}
-            </div>
-
-            <div class="${
-              isOffline
-                ? "history-outcome-offline"
-                : "history-outcome-success"
-            }">
-              ${esc(outcome)}
-            </div>
-
-            <div class="history-time">
-              ${esc(time)}
-            </div>
-
-          `;
-
-
-          panel.appendChild(
-            row
-          );
-
-        }
-      );
-
-    })
-
-    .catch(error => {
-
-      console.error(
-        "History loading error:",
-        error
-      );
-
-
-      panel.innerHTML =
-        '<div class="history-error">Failed to load history.</div>';
-
-    });
+    );
 
 }
 
