@@ -536,42 +536,58 @@
     padding: 12px;
   }
 
-  .history-row {
-    padding: 8px 0;
+  .history-card {
+    background: rgba(255,255,255,0.05);
 
-    border-bottom:
+    border:
       1px solid
-      #333;
+      rgba(255,255,255,0.1);
+
+    border-radius: 10px;
+
+    padding: 10px 12px;
+
+    margin-bottom: 10px;
 
     font-size: 13px;
   }
 
-  .history-row:last-child {
-    border-bottom: none;
+  .history-card:last-child {
+    margin-bottom: 0;
   }
 
-  .history-device {
+  .history-line {
+    padding: 2px 0;
+  }
+
+  .history-line-click {
     color: #fff;
 
     font-weight: 600;
-
-    margin-bottom: 2px;
   }
 
-  .history-outcome-success {
+  .history-line-response {
+    color: #facc15;
+  }
+
+  .history-line-offline {
+    color: #ff6b6b;
+  }
+
+  .history-line-stopped {
     color: #4CAF50;
   }
 
-  .history-outcome-offline {
-    color: #ff6b6b;
+  .history-line-duration {
+    color: #22d3ee;
   }
 
   .history-time {
     color: #888;
 
-    font-size: 12px;
+    font-size: 11px;
 
-    margin-top: 2px;
+    margin-top: 4px;
   }
 </style>
 </head>
@@ -1675,9 +1691,9 @@ function listenRingStatus(
               ] = Date.now();
 
 
-              updateHistoryEntry(
+              updateHistoryFields(
                 deviceId,
-                "Ringing 🔔"
+                { response: "Ringing 🔔" }
               );
 
             }
@@ -1747,21 +1763,25 @@ function listenRingStatus(
 
             if (startedAt) {
 
-              updateHistoryEntry(
+              updateHistoryFields(
                 deviceId,
-                "Stopped by device (rang for " +
-                  formatDuration(
-                    Date.now() -
-                    startedAt
-                  ) +
-                  ")"
+                {
+                  stoppedBy:
+                    "Stopped by device",
+
+                  duration:
+                    formatDuration(
+                      Date.now() -
+                      startedAt
+                    )
+                }
               );
 
             } else {
 
-              updateHistoryEntry(
+              updateHistoryFields(
                 deviceId,
-                "Stopped by device"
+                { stoppedBy: "Stopped by device" }
               );
 
             }
@@ -1819,21 +1839,26 @@ function formatDuration(ms) {
 
 
 function startHistoryEntry(
-  deviceId,
-  outcome
+  deviceId
 ) {
 
   const historyData = {
 
-    outcome:
-      outcome,
+    clickedTime:
+      new Date()
+        .toLocaleString(),
+
+    response:
+      null,
+
+    stoppedBy:
+      null,
+
+    duration:
+      null,
 
     timestamp:
-      Date.now(),
-
-    time:
-      new Date()
-        .toLocaleString()
+      Date.now()
 
   };
 
@@ -1866,9 +1891,9 @@ function startHistoryEntry(
 }
 
 
-function updateHistoryEntry(
+function updateHistoryFields(
   deviceId,
-  outcome
+  fields
 ) {
 
   const key =
@@ -1877,12 +1902,7 @@ function updateHistoryEntry(
 
   if (!key) {
 
-    // No open entry to update — create a fresh one instead
-
-    startHistoryEntry(
-      deviceId,
-      outcome
-    );
+    // No open entry — nothing to attach this update to
 
     return;
 
@@ -1896,16 +1916,7 @@ function updateHistoryEntry(
       "/" +
       key
     )
-    .update({
-
-      outcome:
-        outcome,
-
-      time:
-        new Date()
-          .toLocaleString()
-
-    })
+    .update(fields)
 
     .catch(error => {
 
@@ -1949,14 +1960,20 @@ function renderHistoryEntries(panel, snap) {
           key:
             child.key,
 
-          outcome:
-            value.outcome,
+          clickedTime:
+            value.clickedTime,
+
+          response:
+            value.response,
+
+          stoppedBy:
+            value.stoppedBy,
+
+          duration:
+            value.duration,
 
           timestamp:
-            value.timestamp,
-
-          time:
-            value.time
+            value.timestamp
 
         });
 
@@ -1989,36 +2006,83 @@ function renderHistoryEntries(panel, snap) {
   }
 
 
-  // DISPLAY ALL ENTRIES
+  // DISPLAY ALL ENTRIES AS CARDS
 
   entries.forEach(
     entry => {
 
-      const row =
+      const card =
         document.createElement(
           "div"
         );
 
 
-      row.className =
-        "history-row";
+      card.className =
+        "history-card";
 
 
-      const outcome =
-        entry.outcome ||
-        "";
+      let linesHtml = `
+        <div class="history-line history-line-click">
+          🔔 Ring clicked
+        </div>
+      `;
 
 
-      const isOffline =
-        outcome
-          .toLowerCase()
-          .includes(
-            "offline"
-          );
+      // Line 2: response (ringing / offline)
 
+      if (entry.response) {
+
+        const isOffline =
+          entry.response
+            .toLowerCase()
+            .includes(
+              "offline"
+            );
+
+
+        linesHtml += `
+          <div class="history-line ${
+            isOffline
+              ? "history-line-offline"
+              : "history-line-response"
+          }">
+            ${esc(entry.response)}
+          </div>
+        `;
+
+      }
+
+
+      // Line 3: stopped by
+
+      if (entry.stoppedBy) {
+
+        linesHtml += `
+          <div class="history-line history-line-stopped">
+            ${esc(entry.stoppedBy)}
+          </div>
+        `;
+
+      }
+
+
+      // Line 4: duration
+
+      if (entry.duration) {
+
+        linesHtml += `
+          <div class="history-line history-line-duration">
+            Device rang for ${esc(entry.duration)}
+          </div>
+        `;
+
+      }
+
+
+      // Bottom: time
 
       const time =
-        entry.time ||
+        entry.clickedTime ||
         (
           entry.timestamp
             ? new Date(
@@ -2028,25 +2092,19 @@ function renderHistoryEntries(panel, snap) {
         );
 
 
-      row.innerHTML = `
-
-        <div class="${
-          isOffline
-            ? "history-outcome-offline"
-            : "history-outcome-success"
-        }">
-          ${esc(outcome)}
-        </div>
-
+      linesHtml += `
         <div class="history-time">
           ${esc(time)}
         </div>
-
       `;
 
 
+      card.innerHTML =
+        linesHtml;
+
+
       panel.appendChild(
-        row
+        card
       );
 
     }
@@ -2276,8 +2334,7 @@ function sendCmd(
 
 
     startHistoryEntry(
-      deviceId,
-      "Ring clicked"
+      deviceId
     );
 
 
@@ -2431,9 +2488,9 @@ function sendCmd(
                       );
 
 
-                      updateHistoryEntry(
+                      updateHistoryFields(
                         deviceId,
-                        "Offline - ring did not happen"
+                        { response: "Offline - no response" }
                       );
 
 
@@ -2636,21 +2693,25 @@ function sendCmd(
 
       if (startedAt) {
 
-        updateHistoryEntry(
+        updateHistoryFields(
           deviceId,
-          "Stopped by you (rang for " +
-            formatDuration(
-              Date.now() -
-              startedAt
-            ) +
-            ")"
+          {
+            stoppedBy:
+              "Stopped by you",
+
+            duration:
+              formatDuration(
+                Date.now() -
+                startedAt
+              )
+          }
         );
 
       } else {
 
-        updateHistoryEntry(
+        updateHistoryFields(
           deviceId,
-          "Stopped by you"
+          { stoppedBy: "Stopped by you" }
         );
 
       }
