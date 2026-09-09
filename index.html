@@ -4,554 +4,2525 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Keshab</title>
+
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
 
   body {
     font-family: -apple-system, Segoe UI, Roboto, sans-serif;
     color: #f0f0f0;
-    min-height: 100vh; display: flex;
-    align-items: center; justify-content: center; padding: 24px 16px;
-    background: linear-gradient(-45deg, #1e1b4b, #581c87, #831843, #164e63, #1e1b4b);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 16px;
+
+    background:
+      linear-gradient(
+        -45deg,
+        #1e1b4b,
+        #581c87,
+        #831843,
+        #164e63,
+        #1e1b4b
+      );
+
     background-size: 400% 400%;
     animation: gradientShift 15s ease infinite;
     overflow-x: hidden;
   }
+
   @keyframes gradientShift {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
+    0% {
+      background-position: 0% 50%;
+    }
+
+    50% {
+      background-position: 100% 50%;
+    }
+
+    100% {
+      background-position: 0% 50%;
+    }
   }
 
-  .wrap { width: 100%; max-width: 400px; animation: popIn 0.6s cubic-bezier(0.34,1.56,0.64,1); }
+  .wrap {
+    width: 100%;
+    max-width: 400px;
+    animation: popIn 0.6s cubic-bezier(0.34,1.56,0.64,1);
+  }
+
   @keyframes popIn {
-    0% { opacity: 0; transform: scale(0.85) translateY(20px); }
-    100% { opacity: 1; transform: scale(1) translateY(0); }
+    0% {
+      opacity: 0;
+      transform: scale(0.85) translateY(20px);
+    }
+
+    100% {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
   }
 
   #loginScreen {
     background: rgba(255,255,255,0.06);
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
+
     border: 1px solid rgba(255,255,255,0.12);
     border-radius: 20px;
+
     padding: 32px 24px;
+
     box-shadow: 0 8px 40px rgba(0,0,0,0.4);
   }
 
-  .version { text-align: center; margin-bottom: 22px; }
+  .version {
+    text-align: center;
+    margin-bottom: 22px;
+  }
+
   .version-badge {
     display: inline-block;
-    background: linear-gradient(135deg, #2dd4bf, #22d3ee);
+
+    background:
+      linear-gradient(
+        135deg,
+        #2dd4bf,
+        #22d3ee
+      );
+
     color: #0f0f0f;
+
     padding: 4px 12px;
     border-radius: 20px;
+
     font-weight: 700;
     font-size: 10px;
     letter-spacing: 0.5px;
-    box-shadow: 0 2px 12px rgba(34, 211, 238, 0.4);
+
+    box-shadow:
+      0 2px 12px rgba(34,211,238,0.4);
+
     animation: fadeGlow 3s ease-in-out infinite;
   }
-  @keyframes fadeGlow { 0%,100% { opacity: 0.7; } 50% { opacity: 1; } }
+
+  @keyframes fadeGlow {
+    0%,100% {
+      opacity: 0.7;
+    }
+
+    50% {
+      opacity: 1;
+    }
+  }
 
   input[type=password] {
-    width: 100%; padding: 14px 16px; font-size: 16px;
-    background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15); border-radius: 10px;
-    color: #f0f0f0; outline: none; margin-bottom: 12px;
+    width: 100%;
+
+    padding: 14px 16px;
+    font-size: 16px;
+
+    background: rgba(0,0,0,0.3);
+
+    border:
+      1px solid
+      rgba(255,255,255,0.15);
+
+    border-radius: 10px;
+
+    color: #f0f0f0;
+
+    outline: none;
+
+    margin-bottom: 12px;
+
     transition: all 0.3s ease;
   }
+
   input[type=password]:focus {
     border-color: #22d3ee;
-    box-shadow: 0 0 15px rgba(34, 211, 238, 0.45);
+
+    box-shadow:
+      0 0 15px
+      rgba(34,211,238,0.45);
+
     transform: scale(1.02);
   }
 
   .btn {
-    width: 100%; padding: 14px; font-size: 15px; font-weight: 700;
-    background: linear-gradient(135deg, #2dd4bf, #22d3ee);
-    color: #0f0f0f; border: none;
-    border-radius: 10px; cursor: pointer;
-    box-shadow: 0 4px 18px rgba(34, 211, 238, 0.35);
-    transition: transform 0.15s ease, box-shadow 0.3s ease;
-  }
-  .btn:active { transform: scale(0.96); }
-  .btn:disabled { opacity: 0.5; cursor: default; box-shadow: none; }
+    width: 100%;
 
-  .err-msg { color: #f87171; font-size: 13px; text-align: center; margin-top: 10px; min-height: 18px; }
-  .err-msg.shake { animation: shake 0.4s; }
-  @keyframes shake {
-    0%,100% { transform: translateX(0); }
-    25% { transform: translateX(-8px); }
-    75% { transform: translateX(8px); }
+    padding: 14px;
+
+    font-size: 15px;
+    font-weight: 700;
+
+    background:
+      linear-gradient(
+        135deg,
+        #2dd4bf,
+        #22d3ee
+      );
+
+    color: #0f0f0f;
+
+    border: none;
+    border-radius: 10px;
+
+    cursor: pointer;
+
+    box-shadow:
+      0 4px 18px
+      rgba(34,211,238,0.35);
+
+    transition:
+      transform 0.15s ease,
+      box-shadow 0.3s ease;
   }
+
+  .btn:active {
+    transform: scale(0.96);
+  }
+
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+    box-shadow: none;
+  }
+
+  .err-msg {
+    color: #f87171;
+
+    font-size: 13px;
+
+    text-align: center;
+
+    margin-top: 10px;
+
+    min-height: 18px;
+  }
+
+  .err-msg.shake {
+    animation: shake 0.4s;
+  }
+
+  @keyframes shake {
+    0%,100% {
+      transform: translateX(0);
+    }
+
+    25% {
+      transform: translateX(-8px);
+    }
+
+    75% {
+      transform: translateX(8px);
+    }
+  }
+
+  /* DEVICE CARD */
 
   .device-card {
     background: rgba(255,255,255,0.06);
+
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 14px; padding: 16px; margin-bottom: 12px;
-    box-shadow: 0 6px 24px rgba(0,0,0,0.3);
-    animation: slideIn 0.5s ease backwards;
+
+    border:
+      1px solid
+      rgba(255,255,255,0.12);
+
+    border-radius: 14px;
+
+    padding: 16px;
+
+    margin-bottom: 12px;
+
+    box-shadow:
+      0 6px 24px
+      rgba(0,0,0,0.3);
+
+    animation:
+      slideIn 0.5s ease backwards;
   }
+
   @keyframes slideIn {
-    0% { opacity: 0; transform: translateX(-16px); }
-    100% { opacity: 1; transform: translateX(0); }
+    0% {
+      opacity: 0;
+      transform: translateX(-16px);
+    }
+
+    100% {
+      opacity: 1;
+      transform: translateX(0);
+    }
   }
 
-  .device-name { font-size: 15px; font-weight: 600; margin-bottom: 12px; }
-  .device-btns { display: flex; gap: 8px; }
-  .ring-btn, .stop-btn {
-    flex: 1; padding: 10px; font-size: 14px; font-weight: 700;
-    border: none; border-radius: 8px; cursor: pointer; color: #fff;
-    transition: transform 0.15s ease, box-shadow 0.3s ease, opacity 0.3s ease;
+  .device-name {
+    font-size: 15px;
+    font-weight: 600;
+
+    margin-bottom: 12px;
   }
-  .ring-btn { background: linear-gradient(135deg, #4f46e5, #9333ea); }
-  .ring-btn:not(:disabled) { animation: breathe 2.5s ease-in-out infinite; }
+
+  .device-btns {
+    display: flex;
+    gap: 8px;
+  }
+
+  .ring-btn,
+  .stop-btn {
+    flex: 1;
+
+    padding: 10px;
+
+    font-size: 14px;
+    font-weight: 700;
+
+    border: none;
+    border-radius: 8px;
+
+    cursor: pointer;
+
+    color: #fff;
+
+    transition:
+      transform 0.15s ease,
+      box-shadow 0.3s ease,
+      opacity 0.3s ease;
+  }
+
+  .ring-btn {
+    background:
+      linear-gradient(
+        135deg,
+        #4f46e5,
+        #9333ea
+      );
+  }
+
+  .ring-btn:not(:disabled) {
+    animation:
+      breathe 2.5s ease-in-out infinite;
+  }
+
   @keyframes breathe {
-    0%,100% { box-shadow: 0 0 10px rgba(147, 51, 234, 0.4); }
-    50% { box-shadow: 0 0 22px rgba(147, 51, 234, 0.8); }
-  }
-  .ring-btn:disabled { opacity: 0.55; animation: countdownPulse 1s ease-in-out infinite; }
-  @keyframes countdownPulse { 0%,100% { opacity: 0.45; } 50% { opacity: 0.65; } }
-  .ring-btn:active:not(:disabled) { transform: scale(0.94); }
+    0%,100% {
+      box-shadow:
+        0 0 10px
+        rgba(147,51,234,0.4);
+    }
 
-  .stop-btn { background: linear-gradient(135deg, #dc2626, #ea580c); }
-  .stop-btn:not(:disabled) { animation: breatheRed 2s ease-in-out infinite; }
+    50% {
+      box-shadow:
+        0 0 22px
+        rgba(147,51,234,0.8);
+    }
+  }
+
+  .ring-btn:disabled {
+    opacity: 0.55;
+
+    animation:
+      countdownPulse 1s ease-in-out infinite;
+  }
+
+  @keyframes countdownPulse {
+    0%,100% {
+      opacity: 0.45;
+    }
+
+    50% {
+      opacity: 0.65;
+    }
+  }
+
+  .ring-btn:active:not(:disabled) {
+    transform: scale(0.94);
+  }
+
+  .stop-btn {
+    background:
+      linear-gradient(
+        135deg,
+        #dc2626,
+        #ea580c
+      );
+  }
+
+  .stop-btn:not(:disabled) {
+    animation:
+      breatheRed 2s ease-in-out infinite;
+  }
+
   @keyframes breatheRed {
-    0%,100% { box-shadow: 0 0 10px rgba(220, 38, 38, 0.4); }
-    50% { box-shadow: 0 0 20px rgba(220, 38, 38, 0.75); }
-  }
-  .stop-btn:disabled { opacity: 0.4; }
-  .stop-btn:active:not(:disabled) { transform: scale(0.94); }
+    0%,100% {
+      box-shadow:
+        0 0 10px
+        rgba(220,38,38,0.4);
+    }
 
-  .device-status { font-size: 12px; margin-top: 8px; min-height: 16px; color: #999; }
-  .device-status.sending { color: #facc15; animation: pulse 1s ease-in-out infinite; }
-  .device-status.ringing { color: #facc15; animation: ringPulse 0.6s ease-in-out infinite; }
-  .device-status.stopped { color: #4ade80; animation: popText 0.4s ease; }
-  .device-status.offline { color: #f87171; animation: shakeText 0.4s ease; }
-  .device-status.error   { color: #f87171; animation: shakeText 0.4s ease; }
-  @keyframes pulse { 0%,100% { opacity: 0.5; } 50% { opacity: 1; } }
-  @keyframes ringPulse { 0%,100% { opacity: 0.7; transform: scale(1); } 50% { opacity: 1; transform: scale(1.06); } }
-  @keyframes popText { 0% { opacity: 0; transform: scale(0.8); } 100% { opacity: 1; transform: scale(1); } }
+    50% {
+      box-shadow:
+        0 0 20px
+        rgba(220,38,38,0.75);
+    }
+  }
+
+  .stop-btn:disabled {
+    opacity: 0.4;
+  }
+
+  .stop-btn:active:not(:disabled) {
+    transform: scale(0.94);
+  }
+
+  .device-status {
+    font-size: 12px;
+
+    margin-top: 8px;
+
+    min-height: 16px;
+
+    color: #999;
+  }
+
+  .device-status.sending {
+    color: #facc15;
+
+    animation:
+      pulse 1s ease-in-out infinite;
+  }
+
+  .device-status.ringing {
+    color: #facc15;
+
+    animation:
+      ringPulse 0.6s ease-in-out infinite;
+  }
+
+  .device-status.stopped {
+    color: #4ade80;
+
+    animation:
+      popText 0.4s ease;
+  }
+
+  .device-status.offline {
+    color: #f87171;
+
+    animation:
+      shakeText 0.4s ease;
+  }
+
+  .device-status.error {
+    color: #f87171;
+
+    animation:
+      shakeText 0.4s ease;
+  }
+
+  @keyframes pulse {
+    0%,100% {
+      opacity: 0.5;
+    }
+
+    50% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes ringPulse {
+    0%,100% {
+      opacity: 0.7;
+      transform: scale(1);
+    }
+
+    50% {
+      opacity: 1;
+      transform: scale(1.06);
+    }
+  }
+
+  @keyframes popText {
+    0% {
+      opacity: 0;
+      transform: scale(0.8);
+    }
+
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
   @keyframes shakeText {
-    0%,100% { transform: translateX(0); }
-    25% { transform: translateX(-4px); }
-    75% { transform: translateX(4px); }
+    0%,100% {
+      transform: translateX(0);
+    }
+
+    25% {
+      transform: translateX(-4px);
+    }
+
+    75% {
+      transform: translateX(4px);
+    }
   }
 
-  .empty-msg { text-align: center; color: #aaa; font-size: 14px; margin-top: 40px; }
-  .spinner   { text-align: center; color: #aaa; font-size: 14px; animation: pulse 1.2s ease-in-out infinite; }
+  .empty-msg {
+    text-align: center;
+
+    color: #aaa;
+
+    font-size: 14px;
+
+    margin-top: 40px;
+  }
+
+  .spinner {
+    text-align: center;
+
+    color: #aaa;
+
+    font-size: 14px;
+
+    animation:
+      pulse 1.2s ease-in-out infinite;
+  }
+
+  /* HISTORY */
+
+  #historyPanel {
+    max-height: 300px;
+
+    overflow-y: auto;
+
+    margin-bottom: 16px;
+
+    background: #1a1a1a;
+
+    border-radius: 8px;
+
+    padding: 10px;
+  }
+
+  .history-loading {
+    color: #aaa;
+
+    text-align: center;
+
+    padding: 12px;
+  }
+
+  .history-empty {
+    color: #888;
+
+    text-align: center;
+
+    padding: 12px;
+  }
+
+  .history-error {
+    color: #f87171;
+
+    text-align: center;
+
+    padding: 12px;
+  }
+
+  .history-row {
+    padding: 8px 0;
+
+    border-bottom:
+      1px solid
+      #333;
+
+    font-size: 13px;
+  }
+
+  .history-row:last-child {
+    border-bottom: none;
+  }
+
+  .history-device {
+    color: #fff;
+
+    font-weight: 600;
+
+    margin-bottom: 2px;
+  }
+
+  .history-outcome-success {
+    color: #4CAF50;
+  }
+
+  .history-outcome-offline {
+    color: #ff6b6b;
+  }
+
+  .history-time {
+    color: #888;
+
+    font-size: 12px;
+
+    margin-top: 2px;
+  }
 </style>
 </head>
+
 <body>
+
 <div class="wrap">
 
+  <!-- LOGIN -->
+
   <div id="loginScreen">
-    <div class="version"><span class="version-badge">v1.7</span></div>
-    <input type="password" id="passInput" placeholder="Password" autocomplete="off">
-    <button class="btn" id="loginBtn" onclick="doLogin()">Login</button>
-    <div class="err-msg" id="errMsg"></div>
+
+    <div class="version">
+      <span class="version-badge">
+        v1.7
+      </span>
+    </div>
+
+    <input
+      type="password"
+      id="passInput"
+      placeholder="Password"
+      autocomplete="off"
+    >
+
+    <button
+      class="btn"
+      id="loginBtn"
+      onclick="doLogin()"
+    >
+      Login
+    </button>
+
+    <div
+      class="err-msg"
+      id="errMsg"
+    ></div>
+
   </div>
 
-  <div id="deviceScreen" style="display:none;">
-    <button class="btn" style="background:#555; margin-bottom:16px;" onclick="toggleHistory()">📜 History</button>
-    <div id="historyPanel" style="display:none; max-height:300px; overflow-y:auto; margin-bottom:16px; background:#1a1a1a; border-radius:8px; padding:10px;"></div>
+
+  <!-- DEVICE SCREEN -->
+
+  <div
+    id="deviceScreen"
+    style="display:none;"
+  >
+
+    <button
+      class="btn"
+      style="background:#555; margin-bottom:16px;"
+      onclick="toggleHistory()"
+    >
+      📜 History
+    </button>
+
+
+    <div
+      id="historyPanel"
+      style="display:none;"
+    ></div>
+
+
     <div id="deviceList"></div>
+
   </div>
 
 </div>
 
+
+<!-- FIREBASE -->
+
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database-compat.js"></script>
+
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
 
+
 <script>
-const FIREBASE_API_KEY = "AIzaSyBSAknGfbpQ6zFjA3LlY6m_kPfINIFCyX4";
-const FIREBASE_APP_ID  = "1:213285785887:web:9dda7e5f8fc475e4eea02a";
+
+const FIREBASE_API_KEY =
+  "AIzaSyBSAknGfbpQ6zFjA3LlY6m_kPfINIFCyX4";
+
+const FIREBASE_APP_ID =
+  "1:213285785887:web:9dda7e5f8fc475e4eea02a";
+
 const ROOM = "0001";
 
+
 firebase.initializeApp({
-  apiKey:      FIREBASE_API_KEY,
-  databaseURL: "https://phonefinder-cc9d2-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId:   "phonefinder-cc9d2",
-  appId:       FIREBASE_APP_ID
+
+  apiKey:
+    FIREBASE_API_KEY,
+
+  databaseURL:
+    "https://phonefinder-cc9d2-default-rtdb.asia-southeast1.firebasedatabase.app",
+
+  projectId:
+    "phonefinder-cc9d2",
+
+  appId:
+    FIREBASE_APP_ID
+
 });
 
-const db   = firebase.database();
-const auth = firebase.auth();
+
+const db =
+  firebase.database();
+
+const auth =
+  firebase.auth();
+
+
 let osAppId = null;
-let osKey   = null;
+let osKey = null;
+
 
 const ringStatusListeners = {};
+
 const stoppedByWebsite = {};
+
 const deviceState = {};
+
 const timers = {};
 
-// ── Sound (synthesized — no files, no music) ──────────────────────────────
+
+// ============================================================
+// SOUND
+// ============================================================
+
 let audioCtx = null;
+
+
 function getAudioCtx() {
-  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  if (audioCtx.state === "suspended") audioCtx.resume();
+
+  if (!audioCtx) {
+
+    audioCtx =
+      new (
+        window.AudioContext ||
+        window.webkitAudioContext
+      )();
+
+  }
+
+  if (audioCtx.state === "suspended") {
+
+    audioCtx.resume();
+
+  }
+
   return audioCtx;
 }
-function playTone(freq, duration, type, volume) {
+
+
+function playTone(
+  freq,
+  duration,
+  type,
+  volume
+) {
+
   try {
-    const ctx = getAudioCtx();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = type;
-    osc.frequency.setValueAtTime(freq, ctx.currentTime);
-    gain.gain.setValueAtTime(volume, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+
+    const ctx =
+      getAudioCtx();
+
+    const osc =
+      ctx.createOscillator();
+
+    const gain =
+      ctx.createGain();
+
+
+    osc.type =
+      type;
+
+    osc.frequency.setValueAtTime(
+      freq,
+      ctx.currentTime
+    );
+
+
+    gain.gain.setValueAtTime(
+      volume,
+      ctx.currentTime
+    );
+
+
+    gain.gain.exponentialRampToValueAtTime(
+      0.001,
+      ctx.currentTime + duration
+    );
+
+
     osc.connect(gain);
+
     gain.connect(ctx.destination);
+
+
     osc.start();
-    osc.stop(ctx.currentTime + duration);
-  } catch (e) {}
+
+    osc.stop(
+      ctx.currentTime + duration
+    );
+
+  }
+
+  catch (e) {}
+
 }
-function soundClick()   { playTone(350, 0.07, "sine", 0.18); }
-function soundRing()    { playTone(460, 0.08, "triangle", 0.22); }
-function soundStop()    { playTone(220, 0.09, "triangle", 0.22); }
-function soundSuccess() { playTone(600, 0.08, "sine", 0.18); setTimeout(() => playTone(800, 0.1, "sine", 0.18), 90); }
-function soundError()   { playTone(150, 0.22, "sawtooth", 0.14); }
+
+
+function soundClick() {
+
+  playTone(
+    350,
+    0.07,
+    "sine",
+    0.18
+  );
+
+}
+
+
+function soundRing() {
+
+  playTone(
+    460,
+    0.08,
+    "triangle",
+    0.22
+  );
+
+}
+
+
+function soundStop() {
+
+  playTone(
+    220,
+    0.09,
+    "triangle",
+    0.22
+  );
+
+}
+
+
+function soundSuccess() {
+
+  playTone(
+    600,
+    0.08,
+    "sine",
+    0.18
+  );
+
+  setTimeout(
+    () =>
+      playTone(
+        800,
+        0.1,
+        "sine",
+        0.18
+      ),
+    90
+  );
+
+}
+
+
+function soundError() {
+
+  playTone(
+    150,
+    0.22,
+    "sawtooth",
+    0.14
+  );
+
+}
+
+
+// ============================================================
+// HELPERS
+// ============================================================
 
 function shakeElement(el) {
+
   el.classList.remove("shake");
+
   void el.offsetWidth;
+
   el.classList.add("shake");
+
 }
 
-function setCookie(name, value, days) {
-  const d = new Date();
-  d.setTime(d.getTime() + days * 24 * 60 * 60 * 1000);
-  document.cookie = name + "=" + value + ";expires=" + d.toUTCString() + ";path=/";
+
+function setCookie(
+  name,
+  value,
+  days
+) {
+
+  const d =
+    new Date();
+
+  d.setTime(
+    d.getTime() +
+    days *
+    24 *
+    60 *
+    60 *
+    1000
+  );
+
+
+  document.cookie =
+    name +
+    "=" +
+    encodeURIComponent(value) +
+    ";expires=" +
+    d.toUTCString() +
+    ";path=/";
+
 }
+
+
 function getCookie(name) {
-  for (let c of document.cookie.split(';')) {
-    c = c.trim();
-    if (c.startsWith(name + "=")) return c.substring(name.length + 1);
+
+  for (
+    let c of
+    document.cookie.split(";")
+  ) {
+
+    c =
+      c.trim();
+
+    if (
+      c.startsWith(
+        name + "="
+      )
+    ) {
+
+      return decodeURIComponent(
+        c.substring(
+          name.length + 1
+        )
+      );
+
+    }
+
   }
+
   return "";
+
 }
+
+
+// ============================================================
+// PAGE LOAD
+// ============================================================
 
 window.onload = function() {
-  const saved = getCookie("pf_pass");
+
+  const saved =
+    getCookie("pf_pass");
+
   if (saved) {
-    document.getElementById("passInput").value = saved;
+
+    document.getElementById(
+      "passInput"
+    ).value = saved;
+
     doLogin();
+
   }
+
 };
 
-document.getElementById("passInput")
-  .addEventListener("keydown", e => { if (e.key === "Enter") doLogin(); });
+
+document
+  .getElementById("passInput")
+  .addEventListener(
+    "keydown",
+    e => {
+
+      if (
+        e.key === "Enter"
+      ) {
+
+        doLogin();
+
+      }
+
+    }
+  );
+
+
+// ============================================================
+// LOGIN
+// ============================================================
 
 function doLogin() {
-  const pass = document.getElementById("passInput").value.trim();
+
+  const pass =
+    document
+      .getElementById("passInput")
+      .value
+      .trim();
+
+
   if (!pass) return;
+
+
   soundClick();
-  const btn = document.getElementById("loginBtn");
-  const err = document.getElementById("errMsg");
+
+
+  const btn =
+    document.getElementById(
+      "loginBtn"
+    );
+
+  const err =
+    document.getElementById(
+      "errMsg"
+    );
+
+
   btn.disabled = true;
+
   btn.textContent = "...";
+
   err.textContent = "";
 
-  auth.signInAnonymously()
-    .then(() => db.ref("sitePassword/" + pass).get())
-    .then(snap => {
-      if (!snap.exists() || snap.val() !== true) {
-        auth.signOut();
-        err.textContent = "Incorrect password.";
-        shakeElement(err);
-        soundError();
-        btn.disabled = false;
-        btn.textContent = "Login";
-        setCookie("pf_pass", "", -1);
-        return;
-      }
-      setCookie("pf_pass", pass, 30);
-      return db.ref("privateConfig").get().then(cfg => {
-        osAppId = cfg.child("oneSignalAppId").val();
-        osKey   = cfg.child("oneSignalKey").val();
-        document.getElementById("loginScreen").style.display = "none";
-        document.getElementById("deviceScreen").style.display = "block";
-        loadDevices();
-      });
+
+  auth
+    .signInAnonymously()
+
+    .then(() => {
+
+      return db
+        .ref(
+          "sitePassword/" +
+          pass
+        )
+        .get();
+
     })
-    .catch(() => {
-      err.textContent = "Connection error.";
+
+    .then(snap => {
+
+      if (
+        !snap.exists() ||
+        snap.val() !== true
+      ) {
+
+        auth.signOut();
+
+        err.textContent =
+          "Incorrect password.";
+
+        shakeElement(err);
+
+        soundError();
+
+        btn.disabled = false;
+
+        btn.textContent =
+          "Login";
+
+        setCookie(
+          "pf_pass",
+          "",
+          -1
+        );
+
+        return;
+
+      }
+
+
+      setCookie(
+        "pf_pass",
+        pass,
+        30
+      );
+
+
+      return db
+        .ref("privateConfig")
+        .get()
+
+        .then(cfg => {
+
+          osAppId =
+            cfg
+              .child(
+                "oneSignalAppId"
+              )
+              .val();
+
+
+          osKey =
+            cfg
+              .child(
+                "oneSignalKey"
+              )
+              .val();
+
+
+          document.getElementById(
+            "loginScreen"
+          ).style.display =
+            "none";
+
+
+          document.getElementById(
+            "deviceScreen"
+          ).style.display =
+            "block";
+
+
+          loadDevices();
+
+        });
+
+    })
+
+    .catch(error => {
+
+      console.error(
+        "Login error:",
+        error
+      );
+
+
+      err.textContent =
+        "Connection error.";
+
       shakeElement(err);
+
       soundError();
+
       btn.disabled = false;
-      btn.textContent = "Login";
+
+      btn.textContent =
+        "Login";
+
     });
+
 }
+
+
+// ============================================================
+// LOAD DEVICES
+// ============================================================
 
 function loadDevices() {
-  const listEl = document.getElementById("deviceList");
-  listEl.innerHTML = '<div class="spinner">Loading...</div>';
 
-  db.ref("rooms/" + ROOM).on("value", snap => {
-    Object.keys(ringStatusListeners).forEach(id => {
-      db.ref("ringStatus/" + ROOM + "/" + id).off("value", ringStatusListeners[id]);
-      delete ringStatusListeners[id];
-    });
-    listEl.innerHTML = "";
-    if (!snap.exists()) {
-      listEl.innerHTML = '<div class="empty-msg">No devices.</div>';
-      return;
-    }
-    let count = 0;
-    snap.forEach(child => {
-      const deviceId    = child.key;
-      const name        = child.child("name").val() || "Unknown";
-      const oneSignalId = child.child("oneSignalId").val();
-      if (!oneSignalId) return;
-      count++;
-      const card = document.createElement("div");
-      card.className = "device-card";
-      card.style.animationDelay = ((count - 1) * 0.08) + "s";
-      card.innerHTML = `
-        <div class="device-name">📱 ${esc(name)}</div>
-        <div class="device-btns">
-          <button class="ring-btn" id="ring-${deviceId}"
-            onclick="sendCmd('${oneSignalId}','${deviceId}','RING')">🔔 Ring</button>
-          <button class="stop-btn" id="stop-${deviceId}" disabled
-            onclick="sendCmd('${oneSignalId}','${deviceId}','STOP')">🔇 Stop</button>
-        </div>
-        <div class="device-status" id="status-${deviceId}"></div>
-      `;
-      listEl.appendChild(card);
-      listenRingStatus(deviceId);
-    });
-    if (count === 0) listEl.innerHTML = '<div class="empty-msg">No devices.</div>';
-  });
+  const listEl =
+    document.getElementById(
+      "deviceList"
+    );
+
+
+  listEl.innerHTML =
+    '<div class="spinner">Loading...</div>';
+
+
+  db
+    .ref(
+      "rooms/" +
+      ROOM
+    )
+
+    .on(
+      "value",
+      snap => {
+
+        // Remove old listeners
+
+        Object.keys(
+          ringStatusListeners
+        ).forEach(id => {
+
+          db
+            .ref(
+              "ringStatus/" +
+              ROOM +
+              "/" +
+              id
+            )
+            .off(
+              "value",
+              ringStatusListeners[id]
+            );
+
+          delete
+            ringStatusListeners[id];
+
+        });
+
+
+        listEl.innerHTML = "";
+
+
+        if (!snap.exists()) {
+
+          listEl.innerHTML =
+            '<div class="empty-msg">No devices.</div>';
+
+          return;
+
+        }
+
+
+        let count = 0;
+
+
+        snap.forEach(child => {
+
+          const deviceId =
+            child.key;
+
+
+          const name =
+            child
+              .child("name")
+              .val() ||
+            "Unknown";
+
+
+          const oneSignalId =
+            child
+              .child("oneSignalId")
+              .val();
+
+
+          if (!oneSignalId)
+            return;
+
+
+          count++;
+
+
+          const card =
+            document.createElement(
+              "div"
+            );
+
+
+          card.className =
+            "device-card";
+
+
+          card.style.animationDelay =
+            ((count - 1) * 0.08) +
+            "s";
+
+
+          card.innerHTML = `
+
+            <div
+              class="device-name"
+              id="name-${deviceId}"
+            >
+              📱 ${esc(name)}
+            </div>
+
+            <div class="device-btns">
+
+              <button
+                class="ring-btn"
+                id="ring-${deviceId}"
+                onclick="sendCmd(
+                  '${escAttr(oneSignalId)}',
+                  '${escAttr(deviceId)}',
+                  'RING'
+                )"
+              >
+                🔔 Ring
+              </button>
+
+
+              <button
+                class="stop-btn"
+                id="stop-${deviceId}"
+                disabled
+                onclick="sendCmd(
+                  '${escAttr(oneSignalId)}',
+                  '${escAttr(deviceId)}',
+                  'STOP'
+                )"
+              >
+                🔇 Stop
+              </button>
+
+            </div>
+
+
+            <div
+              class="device-status"
+              id="status-${deviceId}"
+            ></div>
+
+          `;
+
+
+          listEl.appendChild(card);
+
+
+          listenRingStatus(
+            deviceId
+          );
+
+        });
+
+
+        if (count === 0) {
+
+          listEl.innerHTML =
+            '<div class="empty-msg">No devices.</div>';
+
+        }
+
+      }
+    );
+
 }
+
+
+// ============================================================
+// TIMER FUNCTIONS
+// ============================================================
 
 function getT(deviceId) {
-  if (!timers[deviceId]) timers[deviceId] = {};
+
+  if (!timers[deviceId])
+    timers[deviceId] = {};
+
   return timers[deviceId];
+
 }
+
+
 function clearOffline(deviceId) {
-  const t = getT(deviceId);
-  if (t.offline) { clearTimeout(t.offline); t.offline = null; }
+
+  const t =
+    getT(deviceId);
+
+  if (t.offline) {
+
+    clearTimeout(
+      t.offline
+    );
+
+    t.offline = null;
+
+  }
+
 }
+
+
 function clearCountdown(deviceId) {
-  const t = getT(deviceId);
-  if (t.countdown) { clearInterval(t.countdown); t.countdown = null; }
+
+  const t =
+    getT(deviceId);
+
+  if (t.countdown) {
+
+    clearInterval(
+      t.countdown
+    );
+
+    t.countdown = null;
+
+  }
+
 }
+
+
 function clearPendingClear(deviceId) {
-  const t = getT(deviceId);
-  if (t.clear) { clearTimeout(t.clear); t.clear = null; }
+
+  const t =
+    getT(deviceId);
+
+  if (t.clear) {
+
+    clearTimeout(
+      t.clear
+    );
+
+    t.clear = null;
+
+  }
+
 }
+
+
 function clearAllTimers(deviceId) {
+
   clearOffline(deviceId);
+
   clearCountdown(deviceId);
+
   clearPendingClear(deviceId);
+
 }
 
-function showStatus(deviceId, cls, txt, autoClearMs, onClear) {
-  const statusEl = document.getElementById("status-" + deviceId);
-  if (!statusEl) return;
-  clearPendingClear(deviceId);
-  setStatus(statusEl, cls, txt);
+
+// ============================================================
+// STATUS
+// ============================================================
+
+function showStatus(
+  deviceId,
+  cls,
+  txt,
+  autoClearMs,
+  onClear
+) {
+
+  const statusEl =
+    document.getElementById(
+      "status-" +
+      deviceId
+    );
+
+
+  if (!statusEl)
+    return;
+
+
+  clearPendingClear(
+    deviceId
+  );
+
+
+  setStatus(
+    statusEl,
+    cls,
+    txt
+  );
+
+
   if (autoClearMs) {
-    getT(deviceId).clear = setTimeout(() => {
-      setStatus(statusEl, "", "");
-      getT(deviceId).clear = null;
-      if (onClear) onClear();
-    }, autoClearMs);
+
+    getT(deviceId).clear =
+      setTimeout(
+        () => {
+
+          setStatus(
+            statusEl,
+            "",
+            ""
+          );
+
+
+          getT(
+            deviceId
+          ).clear = null;
+
+
+          if (onClear)
+            onClear();
+
+        },
+        autoClearMs
+      );
+
   }
+
 }
 
-function startCooldown(deviceId, ringBtn) {
-  clearCountdown(deviceId);
+
+// ============================================================
+// RING COOLDOWN
+// ============================================================
+
+function startCooldown(
+  deviceId,
+  ringBtn
+) {
+
+  clearCountdown(
+    deviceId
+  );
+
+
   let secs = 35;
-  ringBtn.disabled = true;
-  ringBtn.textContent = `🔔 Ring (${secs}s)`;
-  getT(deviceId).countdown = setInterval(() => {
-    secs--;
-    if (secs <= 0) {
-      clearCountdown(deviceId);
-      ringBtn.disabled = false;
-      ringBtn.textContent = "🔔 Ring";
-    } else {
-      ringBtn.textContent = `🔔 Ring (${secs}s)`;
-    }
-  }, 1000);
-}
 
-function listenRingStatus(deviceId) {
-  const listener = db.ref("ringStatus/" + ROOM + "/" + deviceId).on("value", snap => {
-    const status  = snap.val();
-    const ringBtn = document.getElementById("ring-" + deviceId);
-    const stopBtn = document.getElementById("stop-" + deviceId);
 
-    if (status === "online") {
-      // Phone confirmed it received the push, alarm hasn't started yet
-      if (deviceState[deviceId] === "sending") {
-        clearOffline(deviceId);   // no longer counts as "no response"
-        deviceState[deviceId] = "online";
-        showStatus(deviceId, "sending", "Device is online...\nDevice is ringing now...");
-      }
+  ringBtn.disabled =
+    true;
 
-    } else if (status === "ringing") {
-      const wasRinging = deviceState[deviceId] === "ringing";
-      clearOffline(deviceId);
-      deviceState[deviceId] = "ringing";
-      showStatus(deviceId, "ringing", "Device is online...\nDevice is ringing now 🔔");
-      if (stopBtn) stopBtn.disabled = false;
-      if (!wasRinging) {
-        soundSuccess();
-        logHistory(deviceId, "Ringed successfully");
-      }
 
-    } else if (status === "stopped") {
-      if (stoppedByWebsite[deviceId]) return;
-      deviceState[deviceId] = "idle";
-      clearAllTimers(deviceId);
-      if (stopBtn) stopBtn.disabled = true;
-      if (ringBtn) { ringBtn.disabled = false; ringBtn.textContent = "🔔 Ring"; }
-      showStatus(deviceId, "stopped", "Stopped by device 🔇", 4000);
-      soundStop();
-    }
-  });
-  ringStatusListeners[deviceId] = listener;
-}
+  ringBtn.textContent =
+    `🔔 Ring (${secs}s)`;
 
-// Saves every ring attempt to Firebase - viewable in the History panel
-function logHistory(deviceId, outcome) {
-  const deviceName = document.getElementById("name-" + deviceId)?.textContent || deviceId;
-  db.ref("ringHistory/" + ROOM).push({
-    deviceId: deviceId,
-    deviceName: deviceName,
-    outcome: outcome,
-    timestamp: Date.now(),
-    time: new Date().toLocaleString()
-  });
-}
 
-let historyLoaded = false;
-function toggleHistory() {
-  const panel = document.getElementById("historyPanel");
-  const isOpen = panel.style.display === "block";
-  panel.style.display = isOpen ? "none" : "block";
-  if (!isOpen && !historyLoaded) {
-    historyLoaded = true;
-    db.ref("ringHistory/" + ROOM).orderByChild("timestamp").limitToLast(50).on("value", snap => {
-      panel.innerHTML = "";
-      const entries = [];
-      snap.forEach(child => entries.push(child.val()));
-      entries.reverse().forEach(entry => {
-        const row = document.createElement("div");
-        row.style.cssText = "padding:8px 0; border-bottom:1px solid #333; font-size:13px;";
-        const isOffline = (entry.outcome || "").toLowerCase().includes("offline");
-        row.innerHTML = `
-          <div style="color:#fff;">${entry.deviceName || entry.deviceId}</div>
-          <div style="color:${isOffline ? '#ff6b6b' : '#4CAF50'};">${entry.outcome}</div>
-          <div style="color:#888;">${entry.time}</div>
-        `;
-        panel.appendChild(row);
-      });
-      if (entries.length === 0) {
-        panel.innerHTML = '<div style="color:#888; text-align:center;">No history yet.</div>';
-      }
-    });
-  }
-}
+  getT(
+    deviceId
+  ).countdown =
+    setInterval(
+      () => {
 
-function sendCmd(oneSignalId, deviceId, action) {
-  const ringBtn = document.getElementById("ring-" + deviceId);
-  const stopBtn = document.getElementById("stop-" + deviceId);
+        secs--;
 
-  if (action === "RING") {
-    soundRing();
-    stoppedByWebsite[deviceId] = false;
-    deviceState[deviceId] = "sending";
-    if (stopBtn) stopBtn.disabled = true;
-    showStatus(deviceId, "sending", "Sending... (may take up to 10s) 🔔");
 
-    fetch("https://onesignal.com/api/v1/notifications", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": "Key " + osKey },
-      body: JSON.stringify({
-        app_id: osAppId,
-        include_subscription_ids: [oneSignalId],
-        priority: 10, content_available: true, ttl: 30,
-        data: { action: "RING", from: "Website", roomCode: ROOM, timestamp: Date.now() },
-        contents: { en: "Phone Finder" }
-      })
-    })
-    .then(res => {
-      if (!res.ok) throw new Error();
-      startCooldown(deviceId, ringBtn);
-      clearOffline(deviceId);
-      getT(deviceId).offline = setTimeout(() => {
-        if (deviceState[deviceId] === "sending") {
-          // First check at 5s - not confirmed offline yet, just still waiting
-          showStatus(deviceId, "sending", "Still trying... checking again 🔔");
-          getT(deviceId).offline = setTimeout(() => {
-            if (deviceState[deviceId] === "sending") {
-              // Second check at 10s total - now confirmed offline
-              deviceState[deviceId] = "offline";
-              showStatus(deviceId, "offline", "📴 Offline or no response");
-              logHistory(deviceId, "Device offline - ring did not happen");
-              soundError();
-            }
-          }, 5000);
+        if (secs <= 0) {
+
+          clearCountdown(
+            deviceId
+          );
+
+
+          ringBtn.disabled =
+            false;
+
+
+          ringBtn.textContent =
+            "🔔 Ring";
+
         }
-      }, 5000);
-    })
-    .catch(() => {
-      clearAllTimers(deviceId);
-      showStatus(deviceId, "error", "Failed — try again", 3000);
-      soundError();
-      if (ringBtn) { ringBtn.disabled = false; ringBtn.textContent = "🔔 Ring"; }
-    });
 
-  } else {
-    soundStop();
-    stoppedByWebsite[deviceId] = true;
-    deviceState[deviceId] = "idle";
-    clearAllTimers(deviceId);
-    if (stopBtn) stopBtn.disabled = true;
-    if (ringBtn) { ringBtn.disabled = false; ringBtn.textContent = "🔔 Ring"; }
-    showStatus(deviceId, "sending", "Stopping...");
+        else {
 
-    fetch("https://onesignal.com/api/v1/notifications", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": "Key " + osKey },
-      body: JSON.stringify({
-        app_id: osAppId,
-        include_subscription_ids: [oneSignalId],
-        priority: 10, content_available: true, ttl: 30,
-        data: { action: "STOP", from: "Website", roomCode: ROOM, timestamp: Date.now() },
-        contents: { en: "Phone Finder" }
-      })
-    })
-    .then(res => {
-      if (!res.ok) throw new Error();
-      showStatus(deviceId, "stopped", "Stopped 🔇", 4000, () => {
-        stoppedByWebsite[deviceId] = false;
-      });
-    })
-    .catch(() => {
-      showStatus(deviceId, "error", "Failed — try again", 3000);
-      soundError();
-      stoppedByWebsite[deviceId] = false;
-    });
+          ringBtn.textContent =
+            `🔔 Ring (${secs}s)`;
+
+        }
+
+      },
+      1000
+    );
+
+}
+
+
+// ============================================================
+// RING STATUS LISTENER
+// ============================================================
+
+function listenRingStatus(
+  deviceId
+) {
+
+  const listener =
+    db
+      .ref(
+        "ringStatus/" +
+        ROOM +
+        "/" +
+        deviceId
+      )
+
+      .on(
+        "value",
+        snap => {
+
+          const status =
+            snap.val();
+
+
+          const ringBtn =
+            document.getElementById(
+              "ring-" +
+              deviceId
+            );
+
+
+          const stopBtn =
+            document.getElementById(
+              "stop-" +
+              deviceId
+            );
+
+
+          // PHONE ONLINE
+
+          if (
+            status === "online"
+          ) {
+
+            if (
+              deviceState[
+                deviceId
+              ] === "sending"
+            ) {
+
+              clearOffline(
+                deviceId
+              );
+
+
+              deviceState[
+                deviceId
+              ] = "online";
+
+
+              showStatus(
+                deviceId,
+                "sending",
+                "Device is online...\nDevice is ringing now..."
+              );
+
+            }
+
+          }
+
+
+          // PHONE RINGING
+
+          else if (
+            status === "ringing"
+          ) {
+
+            const wasRinging =
+              deviceState[
+                deviceId
+              ] === "ringing";
+
+
+            clearOffline(
+              deviceId
+            );
+
+
+            deviceState[
+              deviceId
+            ] = "ringing";
+
+
+            showStatus(
+              deviceId,
+              "ringing",
+              "Device is online...\nDevice is ringing now 🔔"
+            );
+
+
+            if (stopBtn)
+              stopBtn.disabled =
+                false;
+
+
+            if (!wasRinging) {
+
+              soundSuccess();
+
+
+              logHistory(
+                deviceId,
+                "Ringed successfully"
+              );
+
+            }
+
+          }
+
+
+          // PHONE STOPPED
+
+          else if (
+            status === "stopped"
+          ) {
+
+            if (
+              stoppedByWebsite[
+                deviceId
+              ]
+            ) {
+
+              return;
+
+            }
+
+
+            deviceState[
+              deviceId
+            ] = "idle";
+
+
+            clearAllTimers(
+              deviceId
+            );
+
+
+            if (stopBtn)
+              stopBtn.disabled =
+                true;
+
+
+            if (ringBtn) {
+
+              ringBtn.disabled =
+                false;
+
+              ringBtn.textContent =
+                "🔔 Ring";
+
+            }
+
+
+            showStatus(
+              deviceId,
+              "stopped",
+              "Stopped by device 🔇",
+              4000
+            );
+
+
+            soundStop();
+
+          }
+
+        }
+      );
+
+
+  ringStatusListeners[
+    deviceId
+  ] = listener;
+
+}
+
+
+// ============================================================
+// SAVE HISTORY
+// ============================================================
+
+function logHistory(
+  deviceId,
+  outcome
+) {
+
+  const nameEl =
+    document.getElementById(
+      "name-" +
+      deviceId
+    );
+
+
+  let deviceName =
+    deviceId;
+
+
+  if (nameEl) {
+
+    deviceName =
+      nameEl.textContent
+        .replace(/^📱\s*/, "")
+        .trim();
+
   }
+
+
+  const historyData = {
+
+    deviceId:
+      deviceId,
+
+    deviceName:
+      deviceName,
+
+    outcome:
+      outcome,
+
+    timestamp:
+      Date.now(),
+
+    time:
+      new Date()
+        .toLocaleString()
+
+  };
+
+
+  console.log(
+    "Saving history:",
+    historyData
+  );
+
+
+  db
+    .ref(
+      "ringHistory/" +
+      ROOM
+    )
+    .push(
+      historyData
+    )
+
+    .then(() => {
+
+      console.log(
+        "History saved successfully."
+      );
+
+    })
+
+    .catch(error => {
+
+      console.error(
+        "History save error:",
+        error
+      );
+
+    });
+
 }
 
-function setStatus(el, cls, txt) {
-  if (!el) return;
-  el.className = "device-status" + (cls ? " " + cls : "");
-  el.style.whiteSpace = "pre-line";   // makes \n actually break the line
-  el.textContent = txt;
+
+// ============================================================
+// LOAD / TOGGLE HISTORY
+// ============================================================
+
+function toggleHistory() {
+
+  const panel =
+    document.getElementById(
+      "historyPanel"
+    );
+
+
+  const isOpen =
+    panel.style.display ===
+    "block";
+
+
+  // CLOSE
+
+  if (isOpen) {
+
+    panel.style.display =
+      "none";
+
+    return;
+
+  }
+
+
+  // OPEN
+
+  panel.style.display =
+    "block";
+
+
+  panel.innerHTML =
+    '<div class="history-loading">Loading history...</div>';
+
+
+  console.log(
+    "Loading:",
+    "ringHistory/" + ROOM
+  );
+
+
+  db
+    .ref(
+      "ringHistory/" +
+      ROOM
+    )
+
+    .orderByChild(
+      "timestamp"
+    )
+
+    .limitToLast(50)
+
+    .once("value")
+
+    .then(snap => {
+
+      panel.innerHTML = "";
+
+
+      const entries = [];
+
+
+      snap.forEach(
+        child => {
+
+          const value =
+            child.val();
+
+
+          if (
+            value &&
+            typeof value ===
+            "object"
+          ) {
+
+            entries.push({
+
+              key:
+                child.key,
+
+              deviceId:
+                value.deviceId,
+
+              deviceName:
+                value.deviceName,
+
+              outcome:
+                value.outcome,
+
+              timestamp:
+                value.timestamp,
+
+              time:
+                value.time
+
+            });
+
+          }
+
+        }
+      );
+
+
+      // Newest first
+
+      entries.sort(
+        (a, b) =>
+          (b.timestamp || 0) -
+          (a.timestamp || 0)
+      );
+
+
+      console.log(
+        "History entries:",
+        entries
+      );
+
+
+      // EMPTY
+
+      if (
+        entries.length === 0
+      ) {
+
+        panel.innerHTML =
+          '<div class="history-empty">No history yet.</div>';
+
+        return;
+
+      }
+
+
+      // DISPLAY ALL ENTRIES
+
+      entries.forEach(
+        entry => {
+
+          const row =
+            document.createElement(
+              "div"
+            );
+
+
+          row.className =
+            "history-row";
+
+
+          const outcome =
+            entry.outcome ||
+            "";
+
+
+          const isOffline =
+            outcome
+              .toLowerCase()
+              .includes(
+                "offline"
+              );
+
+
+          const deviceName =
+            entry.deviceName ||
+            entry.deviceId ||
+            "Unknown";
+
+
+          const time =
+            entry.time ||
+            (
+              entry.timestamp
+                ? new Date(
+                    entry.timestamp
+                  ).toLocaleString()
+                : ""
+            );
+
+
+          row.innerHTML = `
+
+            <div class="history-device">
+              ${esc(deviceName)}
+            </div>
+
+            <div class="${
+              isOffline
+                ? "history-outcome-offline"
+                : "history-outcome-success"
+            }">
+              ${esc(outcome)}
+            </div>
+
+            <div class="history-time">
+              ${esc(time)}
+            </div>
+
+          `;
+
+
+          panel.appendChild(
+            row
+          );
+
+        }
+      );
+
+    })
+
+    .catch(error => {
+
+      console.error(
+        "History loading error:",
+        error
+      );
+
+
+      panel.innerHTML =
+        '<div class="history-error">Failed to load history.</div>';
+
+    });
+
 }
+
+
+// ============================================================
+// SEND COMMAND
+// ============================================================
+
+function sendCmd(
+  oneSignalId,
+  deviceId,
+  action
+) {
+
+  const ringBtn =
+    document.getElementById(
+      "ring-" +
+      deviceId
+    );
+
+
+  const stopBtn =
+    document.getElementById(
+      "stop-" +
+      deviceId
+    );
+
+
+  // ==========================================================
+  // RING
+  // ==========================================================
+
+  if (
+    action === "RING"
+  ) {
+
+    soundRing();
+
+
+    stoppedByWebsite[
+      deviceId
+    ] = false;
+
+
+    deviceState[
+      deviceId
+    ] = "sending";
+
+
+    if (stopBtn)
+      stopBtn.disabled =
+        true;
+
+
+    showStatus(
+      deviceId,
+      "sending",
+      "Sending... (may take up to 10s) 🔔"
+    );
+
+
+    fetch(
+      "https://onesignal.com/api/v1/notifications",
+      {
+
+        method:
+          "POST",
+
+        headers: {
+
+          "Content-Type":
+            "application/json",
+
+          "Authorization":
+            "Key " +
+            osKey
+
+        },
+
+        body:
+          JSON.stringify({
+
+            app_id:
+              osAppId,
+
+            include_subscription_ids:
+              [
+                oneSignalId
+              ],
+
+            priority:
+              10,
+
+            content_available:
+              true,
+
+            ttl:
+              30,
+
+            data: {
+
+              action:
+                "RING",
+
+              from:
+                "Website",
+
+              roomCode:
+                ROOM,
+
+              timestamp:
+                Date.now()
+
+            },
+
+            contents: {
+
+              en:
+                "Phone Finder"
+
+            }
+
+          })
+
+      }
+    )
+
+    .then(res => {
+
+      if (!res.ok)
+        throw new Error(
+          "OneSignal request failed"
+        );
+
+
+      startCooldown(
+        deviceId,
+        ringBtn
+      );
+
+
+      clearOffline(
+        deviceId
+      );
+
+
+      // First check after 5 seconds
+
+      getT(deviceId).offline =
+        setTimeout(
+          () => {
+
+            if (
+              deviceState[
+                deviceId
+              ] === "sending"
+            ) {
+
+              showStatus(
+                deviceId,
+                "sending",
+                "Still trying... checking again 🔔"
+              );
+
+
+              // Second check after another 5 seconds
+
+              getT(deviceId).offline =
+                setTimeout(
+                  () => {
+
+                    if (
+                      deviceState[
+                        deviceId
+                      ] === "sending"
+                    ) {
+
+                      deviceState[
+                        deviceId
+                      ] = "offline";
+
+
+                      showStatus(
+                        deviceId,
+                        "offline",
+                        "📴 Offline or no response"
+                      );
+
+
+                      logHistory(
+                        deviceId,
+                        "Device offline - ring did not happen"
+                      );
+
+
+                      soundError();
+
+                    }
+
+                  },
+                  5000
+                );
+
+            }
+
+          },
+          5000
+        );
+
+    })
+
+    .catch(error => {
+
+      console.error(
+        "Ring error:",
+        error
+      );
+
+
+      clearAllTimers(
+        deviceId
+      );
+
+
+      showStatus(
+        deviceId,
+        "error",
+        "Failed — try again",
+        3000
+      );
+
+
+      soundError();
+
+
+      if (ringBtn) {
+
+        ringBtn.disabled =
+          false;
+
+        ringBtn.textContent =
+          "🔔 Ring";
+
+      }
+
+    });
+
+  }
+
+
+  // ==========================================================
+  // STOP
+  // ==========================================================
+
+  else {
+
+    soundStop();
+
+
+    stoppedByWebsite[
+      deviceId
+    ] = true;
+
+
+    deviceState[
+      deviceId
+    ] = "idle";
+
+
+    clearAllTimers(
+      deviceId
+    );
+
+
+    if (stopBtn)
+      stopBtn.disabled =
+        true;
+
+
+    if (ringBtn) {
+
+      ringBtn.disabled =
+        false;
+
+      ringBtn.textContent =
+        "🔔 Ring";
+
+    }
+
+
+    showStatus(
+      deviceId,
+      "sending",
+      "Stopping..."
+    );
+
+
+    fetch(
+      "https://onesignal.com/api/v1/notifications",
+      {
+
+        method:
+          "POST",
+
+        headers: {
+
+          "Content-Type":
+            "application/json",
+
+          "Authorization":
+            "Key " +
+            osKey
+
+        },
+
+        body:
+          JSON.stringify({
+
+            app_id:
+              osAppId,
+
+            include_subscription_ids:
+              [
+                oneSignalId
+              ],
+
+            priority:
+              10,
+
+            content_available:
+              true,
+
+            ttl:
+              30,
+
+            data: {
+
+              action:
+                "STOP",
+
+              from:
+                "Website",
+
+              roomCode:
+                ROOM,
+
+              timestamp:
+                Date.now()
+
+            },
+
+            contents: {
+
+              en:
+                "Phone Finder"
+
+            }
+
+          })
+
+      }
+    )
+
+    .then(res => {
+
+      if (!res.ok)
+        throw new Error(
+          "OneSignal request failed"
+        );
+
+
+      showStatus(
+        deviceId,
+        "stopped",
+        "Stopped 🔇",
+        4000,
+        () => {
+
+          stoppedByWebsite[
+            deviceId
+          ] = false;
+
+        }
+      );
+
+    })
+
+    .catch(error => {
+
+      console.error(
+        "Stop error:",
+        error
+      );
+
+
+      showStatus(
+        deviceId,
+        "error",
+        "Failed — try again",
+        3000
+      );
+
+
+      soundError();
+
+
+      stoppedByWebsite[
+        deviceId
+      ] = false;
+
+    });
+
+  }
+
+}
+
+
+// ============================================================
+// STATUS TEXT
+// ============================================================
+
+function setStatus(
+  el,
+  cls,
+  txt
+) {
+
+  if (!el)
+    return;
+
+
+  el.className =
+    "device-status" +
+    (
+      cls
+        ? " " + cls
+        : ""
+    );
+
+
+  el.style.whiteSpace =
+    "pre-line";
+
+
+  el.textContent =
+    txt;
+
+}
+
+
+// ============================================================
+// HTML ESCAPE
+// ============================================================
+
 function esc(str) {
-  return String(str).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+
+  return String(str)
+
+    .replace(
+      /&/g,
+      "&amp;"
+    )
+
+    .replace(
+      /</g,
+      "&lt;"
+    )
+
+    .replace(
+      />/g,
+      "&gt;"
+    );
+
 }
+
+
+// ============================================================
+// ATTRIBUTE ESCAPE
+// ============================================================
+
+function escAttr(str) {
+
+  return String(str)
+
+    .replace(
+      /\\/g,
+      "\\\\"
+    )
+
+    .replace(
+      /'/g,
+      "\\'"
+    )
+
+    .replace(
+      /"/g,
+      "&quot;"
+    )
+
+    .replace(
+      /</g,
+      "&lt;"
+    )
+
+    .replace(
+      />/g,
+      "&gt;"
+    );
+
+}
+
 </script>
+
 </body>
 </html>
