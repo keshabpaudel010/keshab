@@ -738,6 +738,7 @@ const auth =
 
 let osAppId = null;
 let osKey = null;
+let currentUserName = null;
 
 
 const ringStatusListeners = {};
@@ -1081,10 +1082,29 @@ function doLogin() {
 
     .then(snap => {
 
-      if (
-        !snap.exists() ||
-        snap.val() !== true
+      const val = snap.val();
+
+      let valid = false;
+      let uname = "Unknown";
+
+      if (val === true) {
+
+        // legacy entry: sitePassword/<pass> = true
+        valid = true;
+
+      } else if (
+        val &&
+        typeof val === "object" &&
+        val.active === true
       ) {
+
+        // new entry: sitePassword/<pass> = { name, active: true }
+        valid = true;
+        uname = val.name || "Unknown";
+
+      }
+
+      if (!snap.exists() || !valid) {
 
         auth.signOut();
 
@@ -1111,9 +1131,17 @@ function doLogin() {
       }
 
 
+      currentUserName = uname;
+
       setCookie(
         "pf_pass",
         pass,
+        30
+      );
+
+      setCookie(
+        "pf_name",
+        uname,
         30
       );
 
@@ -1883,6 +1911,9 @@ function startHistoryEntry(
     duration:
       null,
 
+    triggeredBy:
+      currentUserName || "Unknown",
+
     timestamp:
       Date.now()
 
@@ -2007,6 +2038,9 @@ function renderHistoryEntries(panel, snap) {
           duration:
             value.duration,
 
+          triggeredBy:
+            value.triggeredBy,
+
           timestamp:
             value.timestamp
 
@@ -2065,6 +2099,19 @@ function renderHistoryEntries(panel, snap) {
           }
         </div>
       `;
+
+
+      // Line: who triggered it
+
+      if (entry.triggeredBy) {
+
+        linesHtml += `
+          <div class="history-line">
+            👤 By ${esc(entry.triggeredBy)}
+          </div>
+        `;
+
+      }
 
 
       // Line 2: response (ringing / offline)
