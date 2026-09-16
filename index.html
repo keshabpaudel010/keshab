@@ -756,6 +756,7 @@ const auth =
 let osAppId = null;
 let osKey = null;
 let currentUserName = null;
+let siteActive = true;
 
 let siteToggleTimer = null;
 let siteToggleHoldStartedAt = 0;
@@ -790,20 +791,46 @@ function listenSiteStatus() {
 
       const active = snap.val() === true;
 
+      siteActive = active;
+
       const dot =
         document.getElementById(
           "siteStatusDot"
         );
 
-      if (!dot) return;
+      if (dot) {
 
-      dot.style.background =
-        active ? "#22c55e" : "#ef4444";
+        dot.style.background =
+          active ? "#22c55e" : "#ef4444";
 
-      dot.style.boxShadow =
-        active
-          ? "0 0 8px #22c55e"
-          : "0 0 8px #ef4444";
+        dot.style.boxShadow =
+          active
+            ? "0 0 8px #22c55e"
+            : "0 0 8px #ef4444";
+
+      }
+
+      applySiteActiveToButtons();
+
+    });
+
+}
+
+function applySiteActiveToButtons() {
+
+  document
+    .querySelectorAll(
+      "[id^='ring-']"
+    )
+    .forEach(btn => {
+
+      btn.style.opacity =
+        siteActive ? "1" : "0.4";
+
+      btn.style.cursor =
+        siteActive
+          ? "pointer"
+          : "not-allowed";
 
     });
 
@@ -1540,6 +1567,8 @@ function loadDevices() {
             '<div class="empty-msg">No devices.</div>';
 
         }
+
+        applySiteActiveToButtons();
 
       }
     );
@@ -2534,6 +2563,19 @@ function sendCmd(
   deviceId,
   action
 ) {
+
+  if (!siteActive) {
+
+    showStatus(
+      deviceId,
+      "stopped",
+      "⛔ Currently web is stopped"
+    );
+
+    return;
+
+  }
+
 
   const ringBtn =
     document.getElementById(
