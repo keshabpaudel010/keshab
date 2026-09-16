@@ -636,7 +636,7 @@
     style="display:none;"
   >
 
-    <div style="display:flex; gap:8px; margin-bottom:16px;">
+    <div style="display:flex; gap:8px; margin-bottom:16px; align-items:center;">
 
       <button
         class="btn"
@@ -663,6 +663,20 @@
       >
         🗑️
       </button>
+
+      <span
+        id="siteStatusDot"
+        title="Site status"
+        style="
+          flex:0 0 auto;
+          width:12px;
+          height:12px;
+          border-radius:50%;
+          background:#555;
+          margin-left:auto;
+          box-shadow:0 0 6px rgba(0,0,0,0.4);
+        "
+      ></span>
 
     </div>
 
@@ -700,9 +714,7 @@ const ROOM = "0001";
 
 // Manual overrides: map raw deviceId -> friendly display name.
 // Add more lines here in the same format if you get more devices.
-const DEVICE_NAME_OVERRIDES = {
-  "a97ab1443ced2704": "Keshab"
-};
+const DEVICE_NAME_OVERRIDES = {};
 
 function displayDeviceName(rawId, fallbackName) {
   if (rawId && DEVICE_NAME_OVERRIDES[rawId]) {
@@ -739,6 +751,104 @@ const auth =
 let osAppId = null;
 let osKey = null;
 let currentUserName = null;
+
+let siteToggleTimer = null;
+let siteToggleHoldStartedAt = 0;
+const SITE_TOGGLE_HOLD_MS = 3000;
+
+function listenSiteStatus() {
+
+  db.ref("siteStatus/active")
+    .get()
+    .then(snap => {
+
+      if (!snap.exists()) {
+
+        // First time ever — create it automatically, default ON.
+        db.ref("siteStatus/active")
+          .set(true);
+
+      }
+
+    })
+    .catch(e => {
+
+      console.error(
+        "Site status init failed:",
+        e
+      );
+
+    });
+
+  db.ref("siteStatus/active")
+    .on("value", snap => {
+
+      const active = snap.val() === true;
+
+      const dot =
+        document.getElementById(
+          "siteStatusDot"
+        );
+
+      if (!dot) return;
+
+      dot.style.background =
+        active ? "#22c55e" : "#ef4444";
+
+      dot.style.boxShadow =
+        active
+          ? "0 0 8px #22c55e"
+          : "0 0 8px #ef4444";
+
+    });
+
+}
+
+function startSiteToggleHold(ev) {
+
+  if (ev) ev.preventDefault();
+
+  siteToggleHoldStartedAt = Date.now();
+
+  clearTimeout(siteToggleTimer);
+
+  siteToggleTimer = setTimeout(() => {
+
+    toggleSiteStatus();
+
+  }, SITE_TOGGLE_HOLD_MS);
+
+}
+
+function cancelSiteToggleHold() {
+
+  clearTimeout(siteToggleTimer);
+  siteToggleTimer = null;
+
+}
+
+function toggleSiteStatus() {
+
+  db.ref("siteStatus/active")
+    .get()
+    .then(snap => {
+
+      const current = snap.val() === true;
+
+      db.ref("siteStatus/active")
+        .set(!current);
+
+    })
+    .catch(e => {
+
+      console.error(
+        "Site status toggle failed:",
+        e
+      );
+
+    });
+
+}
 
 
 const ringStatusListeners = {};
@@ -1181,6 +1291,7 @@ function doLogin() {
 
 
           loadDevices();
+          listenSiteStatus();
 
         });
 
@@ -1329,6 +1440,11 @@ function loadDevices() {
             <div
               class="device-name"
               id="name-${deviceId}"
+              onpointerdown="startSiteToggleHold(event)"
+              onpointerup="cancelSiteToggleHold()"
+              onpointerleave="cancelSiteToggleHold()"
+              onpointercancel="cancelSiteToggleHold()"
+              style="touch-action: manipulation; user-select: none;"
             >
               📱 ${esc(name)}
             </div>
