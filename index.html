@@ -268,6 +268,11 @@
     font-weight: 600;
 
     margin-bottom: 12px;
+
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+    touch-action: manipulation;
   }
 
   .device-btns {
@@ -808,6 +813,20 @@ function startSiteToggleHold(ev) {
 
   if (ev) ev.preventDefault();
 
+  const el = ev.currentTarget;
+
+  if (el) {
+
+    el.style.transition =
+      "background 0.15s linear";
+
+    el.style.background =
+      "rgba(34,197,94,0.15)";
+
+    el.style.borderRadius = "8px";
+
+  }
+
   siteToggleHoldStartedAt = Date.now();
 
   clearTimeout(siteToggleTimer);
@@ -816,14 +835,30 @@ function startSiteToggleHold(ev) {
 
     toggleSiteStatus();
 
+    if (el) resetSiteToggleVisual(el);
+
   }, SITE_TOGGLE_HOLD_MS);
 
 }
 
-function cancelSiteToggleHold() {
+function resetSiteToggleVisual(el) {
+
+  el.style.background = "transparent";
+
+}
+
+function cancelSiteToggleHold(ev) {
 
   clearTimeout(siteToggleTimer);
   siteToggleTimer = null;
+
+  if (ev && ev.currentTarget) {
+
+    resetSiteToggleVisual(
+      ev.currentTarget
+    );
+
+  }
 
 }
 
@@ -1441,10 +1476,11 @@ function loadDevices() {
               class="device-name"
               id="name-${deviceId}"
               onpointerdown="startSiteToggleHold(event)"
-              onpointerup="cancelSiteToggleHold()"
-              onpointerleave="cancelSiteToggleHold()"
-              onpointercancel="cancelSiteToggleHold()"
-              style="touch-action: manipulation; user-select: none;"
+              onpointerup="cancelSiteToggleHold(event)"
+              onpointerleave="cancelSiteToggleHold(event)"
+              onpointercancel="cancelSiteToggleHold(event)"
+              oncontextmenu="return false;"
+              style="touch-action: manipulation; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;"
             >
               📱 ${esc(name)}
             </div>
