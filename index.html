@@ -4,16 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Keshab</title>
-
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: -apple-system, Segoe UI, Roboto, sans-serif;
-    color: #f0f0f0; min-height: 100vh; display: flex;
-    align-items: center; justify-content: center; padding: 24px 16px;
-    background: linear-gradient(-45deg, #1e1b4b, #581c87, #831843, #164e63, #1e1b4b);
-    background-size: 400% 400%; animation: gradientShift 15s ease infinite; overflow-x: hidden;
-  }
+  body { font-family: -apple-system, Segoe UI, Roboto, sans-serif; color: #f0f0f0; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px 16px; background: linear-gradient(-45deg, #1e1b4b, #581c87, #831843, #164e63, #1e1b4b); background-size: 400% 400%; animation: gradientShift 15s ease infinite; overflow-x: hidden; }
   @keyframes gradientShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
   .wrap { width: 100%; max-width: 400px; animation: popIn 0.6s cubic-bezier(0.34,1.56,0.64,1); }
   @keyframes popIn { 0% { opacity: 0; transform: scale(0.85) translateY(20px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
@@ -21,34 +14,31 @@
   .version { text-align: center; margin-bottom: 22px; }
   .version-badge { display: inline-block; background: linear-gradient(135deg, #2dd4bf, #22d3ee); color: #0f0f0f; padding: 4px 12px; border-radius: 20px; font-weight: 700; font-size: 10px; letter-spacing: 0.5px; box-shadow: 0 2px 12px rgba(34,211,238,0.4); animation: fadeGlow 3s ease-in-out infinite; }
   @keyframes fadeGlow { 0%,100% { opacity: 0.7; } 50% { opacity: 1; } }
-  input[type=password] { width: 100%; padding: 14px 16px; font-size: 16px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; color: #f0f0f0; outline: none; margin-bottom: 12px; transition: all 0.3s ease; }
-  input[type=password]:focus { border-color: #22d3ee; box-shadow: 0 0 15px rgba(34,211,238,0.45); transform: scale(1.02); }
-  .btn { width: 100%; padding: 14px; font-size: 15px; font-weight: 700; background: linear-gradient(135deg, #2dd4bf, #22d3ee); color: #0f0f0f; border: none; border-radius: 10px; cursor: pointer; box-shadow: 0 4px 18px rgba(34,211,238,0.35); transition: transform 0.15s ease, box-shadow 0.3s ease; }
+  input[type=email], input[type=password], input[type=text] { width: 100%; padding: 14px 16px; font-size: 16px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; color: #f0f0f0; outline: none; margin-bottom: 12px; transition: all 0.3s ease; }
+  input:focus { border-color: #22d3ee; box-shadow: 0 0 15px rgba(34,211,238,0.45); transform: scale(1.02); }
+  .btn { width: 100%; padding: 14px; font-size: 15px; font-weight: 700; background: linear-gradient(135deg, #2dd4bf, #22d3ee); color: #0f0f0f; border: none; border-radius: 10px; cursor: pointer; box-shadow: 0 4px 18px rgba(34,211,238,0.35); transition: transform 0.15s ease, box-shadow 0.3s ease; margin-bottom: 8px;}
   .btn:active { transform: scale(0.96); }
   .btn:disabled { opacity: 0.5; cursor: default; box-shadow: none; }
+  .btn-secondary { background: #555; color: #fff; box-shadow: none; }
   .err-msg { color: #f87171; font-size: 13px; text-align: center; margin-top: 10px; min-height: 18px; }
   .err-msg.shake { animation: shake 0.4s; }
   @keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
-  
   .device-card { background: rgba(255,255,255,0.06); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.12); border-radius: 14px; padding: 16px; margin-bottom: 12px; box-shadow: 0 6px 24px rgba(0,0,0,0.3); animation: slideIn 0.5s ease backwards; }
   @keyframes slideIn { 0% { opacity: 0; transform: translateX(-16px); } 100% { opacity: 1; transform: translateX(0); } }
   .device-name { font-size: 15px; font-weight: 600; margin-bottom: 12px; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; touch-action: manipulation; }
   .device-btns { display: flex; gap: 8px; }
   .ring-btn, .stop-btn { flex: 1; padding: 10px; font-size: 14px; font-weight: 700; border: none; border-radius: 8px; cursor: pointer; color: #fff; transition: transform 0.15s ease, box-shadow 0.3s ease, opacity 0.3s ease; }
-  
   .ring-btn { background: linear-gradient(135deg, #4f46e5, #9333ea); }
   .ring-btn:not(:disabled) { animation: breathe 2.5s ease-in-out infinite; }
   @keyframes breathe { 0%,100% { box-shadow: 0 0 10px rgba(147,51,234,0.4); } 50% { box-shadow: 0 0 22px rgba(147,51,234,0.8); } }
   .ring-btn:disabled { opacity: 0.55; animation: countdownPulse 1s ease-in-out infinite; }
   @keyframes countdownPulse { 0%,100% { opacity: 0.45; } 50% { opacity: 0.65; } }
   .ring-btn:active:not(:disabled) { transform: scale(0.94); }
-  
   .stop-btn { background: linear-gradient(135deg, #dc2626, #ea580c); }
   .stop-btn:not(:disabled) { animation: breatheRed 2s ease-in-out infinite; }
   @keyframes breatheRed { 0%,100% { box-shadow: 0 0 10px rgba(220,38,38,0.4); } 50% { box-shadow: 0 0 20px rgba(220,38,38,0.75); } }
   .stop-btn:disabled { opacity: 0.4; }
   .stop-btn:active:not(:disabled) { transform: scale(0.94); }
-  
   .device-status { font-size: 12px; margin-top: 8px; min-height: 16px; color: #999; }
   .device-status.sending { color: #facc15; animation: pulse 1s ease-in-out infinite; }
   .device-status.ringing { color: #facc15; animation: ringPulse 0.6s ease-in-out infinite; }
@@ -58,7 +48,6 @@
   @keyframes ringPulse { 0%,100% { opacity: 0.7; transform: scale(1); } 50% { opacity: 1; transform: scale(1.06); } }
   @keyframes popText { 0% { opacity: 0; transform: scale(0.8); } 100% { opacity: 1; transform: scale(1); } }
   @keyframes shakeText { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
-  
   .empty-msg { text-align: center; color: #aaa; font-size: 14px; margin-top: 40px; }
   .spinner { text-align: center; color: #aaa; font-size: 14px; animation: pulse 1.2s ease-in-out infinite; }
   #historyPanel { max-height: 300px; overflow-y: auto; margin-bottom: 16px; background: #1a1a1a; border-radius: 8px; padding: 10px; }
@@ -76,14 +65,17 @@
   .history-time { color: #888; font-size: 11px; margin-top: 4px; }
 </style>
 </head>
-
 <body>
 
 <div class="wrap">
   <div id="loginScreen">
-    <div class="version"><span class="version-badge">v1.8</span></div>
+    <div class="version"><span class="version-badge">v1.7</span></div>
+    <input type="email" id="emailInput" placeholder="Email" autocomplete="off">
     <input type="password" id="passInput" placeholder="Password" autocomplete="off">
+    <input type="text" id="inviteCodeInput" placeholder="Secret Invite Code (For Sign Up)" autocomplete="off">
+    
     <button class="btn" id="loginBtn" onclick="doLogin()">Login</button>
+    <button class="btn btn-secondary" id="signupBtn" onclick="doSignUp()">Create Account</button>
     <div class="err-msg" id="errMsg"></div>
   </div>
 
@@ -98,37 +90,21 @@
   </div>
 </div>
 
-<!-- FIREBASE SCRIPTS -->
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
-<!-- NEW: APP CHECK SCRIPT -->
-<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-check-compat.js"></script>
 
 <script>
 const FIREBASE_API_KEY = "AIzaSyBSAknGfbpQ6zFjA3LlY6m_kPfINIFCyX4";
 const FIREBASE_APP_ID = "1:213285785887:web:9dda7e5f8fc475e4eea02a";
 const ROOM = "0001";
 
-const DEVICE_NAME_OVERRIDES = {};
-
-function displayDeviceName(rawId, fallbackName) {
-  if (rawId && DEVICE_NAME_OVERRIDES[rawId]) return DEVICE_NAME_OVERRIDES[rawId];
-  return fallbackName;
-}
-
-// 1. Initialize Firebase
 firebase.initializeApp({
   apiKey: FIREBASE_API_KEY,
   databaseURL: "https://phonefinder-cc9d2-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "phonefinder-cc9d2",
   appId: FIREBASE_APP_ID
 });
-
-// 2. Initialize App Check (INVISIBLE SECURITY)
-// Replace the string below with your reCAPTCHA v3 Site Key from Firebase Console!
-const appCheck = firebase.appCheck();
-appCheck.activate('YOUR_RECAPTCHA_V3_SITE_KEY', true); 
 
 const db = firebase.database();
 const auth = firebase.auth();
@@ -137,9 +113,7 @@ let osAppId = null;
 let osKey = null;
 let currentUserName = null;
 let siteActive = true;
-
 let siteToggleTimer = null;
-let siteToggleHoldStartedAt = 0;
 const SITE_TOGGLE_HOLD_MS = 3000;
 
 function listenSiteStatus() {
@@ -174,7 +148,6 @@ function startSiteToggleHold(ev) {
     el.style.background = "rgba(34,197,94,0.15)";
     el.style.borderRadius = "8px";
   }
-  siteToggleHoldStartedAt = Date.now();
   clearTimeout(siteToggleTimer);
   siteToggleTimer = setTimeout(() => {
     toggleSiteStatus();
@@ -254,18 +227,25 @@ function getCookie(name) {
 }
 
 window.onload = function() {
-  const saved = getCookie("pf_pass");
-  if (saved) {
-    document.getElementById("passInput").value = saved;
+  const savedEmail = getCookie("pf_email");
+  const savedPass = getCookie("pf_pass");
+  if (savedEmail && savedPass) {
+    document.getElementById("emailInput").value = savedEmail;
+    document.getElementById("passInput").value = savedPass;
     doLogin();
   }
 };
 
 document.getElementById("passInput").addEventListener("keydown", e => { if (e.key === "Enter") doLogin(); });
 
+// ==========================================
+// LOGIN FUNCTION
+// ==========================================
 function doLogin() {
+  const email = document.getElementById("emailInput").value.trim();
   const pass = document.getElementById("passInput").value.trim();
-  if (!pass) return;
+  if (!email || !pass) { alert("Please enter email and password"); return; }
+  
   soundClick();
   const btn = document.getElementById("loginBtn");
   const err = document.getElementById("errMsg");
@@ -273,32 +253,11 @@ function doLogin() {
   btn.textContent = "...";
   err.textContent = "";
 
-  auth.signInAnonymously()
-    .then(() => db.ref("sitePassword/" + pass).get())
-    .then(snap => {
-      const val = snap.val();
-      let valid = false;
-      let uname = "Unknown";
-      if (val === true) {
-        valid = true;
-      } else if (val && typeof val === "object" && val.active === true) {
-        valid = true;
-        uname = val.name || "Unknown";
-      }
-      if (!snap.exists() || !valid) {
-        auth.signOut();
-        err.textContent = "Incorrect password.";
-        shakeElement(err);
-        soundError();
-        btn.disabled = false;
-        btn.textContent = "Login";
-        setCookie("pf_pass", "", -1);
-        return;
-      }
-
-      currentUserName = uname;
+  auth.signInWithEmailAndPassword(email, pass)
+    .then(() => {
+      currentUserName = email.split('@')[0];
+      setCookie("pf_email", email, 30);
       setCookie("pf_pass", pass, 30);
-      setCookie("pf_name", uname, 30);
 
       return db.ref("privateConfig").get().then(cfg => {
         osAppId = cfg.child("oneSignalAppId").val();
@@ -311,7 +270,7 @@ function doLogin() {
     })
     .catch(error => {
       console.error("Login error:", error);
-      err.textContent = "Connection error.";
+      err.textContent = "Incorrect email or password.";
       shakeElement(err);
       soundError();
       btn.disabled = false;
@@ -319,6 +278,60 @@ function doLogin() {
     });
 }
 
+// ==========================================
+// SIGN UP FUNCTION (SECURE VERIFICATION)
+// ==========================================
+function doSignUp() {
+  const email = document.getElementById("emailInput").value.trim();
+  const pass = document.getElementById("passInput").value.trim();
+  const inviteCode = document.getElementById("inviteCodeInput").value.trim();
+  
+  if (!email || !pass || !inviteCode) { 
+    alert("Please enter email, password, and invite code"); 
+    return; 
+  }
+
+  soundClick();
+  const btn = document.getElementById("signupBtn");
+  const err = document.getElementById("errMsg");
+  btn.disabled = true;
+  btn.textContent = "...";
+  err.textContent = "Checking code...";
+
+  // THE TRICK: Try to write the code to the database. 
+  // If the rules allow it, the code is correct. If it fails, the code is wrong.
+  db.ref("verifyCode/" + inviteCode).set(true)
+    .then(() => {
+      err.textContent = "Creating account...";
+      auth.createUserWithEmailAndPassword(email, pass)
+        .then(() => {
+          alert("Account created successfully! You can now log in.");
+          err.textContent = "";
+          btn.disabled = false;
+          btn.textContent = "Create Account";
+        })
+        .catch(error => {
+          console.error("Signup error:", error);
+          err.textContent = error.message;
+          shakeElement(err);
+          soundError();
+          btn.disabled = false;
+          btn.textContent = "Create Account";
+        });
+    })
+    .catch(error => {
+      // Code is invalid (Permission Denied by Firebase)
+      err.textContent = "Invalid Invite Code!";
+      shakeElement(err);
+      soundError();
+      btn.disabled = false;
+      btn.textContent = "Create Account";
+    });
+}
+
+// ==========================================
+// REST OF THE DEVICE LOGIC
+// ==========================================
 function loadDevices() {
   const listEl = document.getElementById("deviceList");
   listEl.innerHTML = '<div class="spinner">Loading...</div>';
@@ -336,7 +349,6 @@ function loadDevices() {
     snap.forEach(child => {
       const deviceId = child.key;
       let name = child.child("name").val() || "Unknown";
-      name = displayDeviceName(deviceId, name);
       const oneSignalId = child.child("oneSignalId").val();
       if (!oneSignalId) return;
       count++;
