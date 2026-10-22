@@ -14,12 +14,20 @@
   .version { text-align: center; margin-bottom: 22px; }
   .version-badge { display: inline-block; background: linear-gradient(135deg, #2dd4bf, #22d3ee); color: #0f0f0f; padding: 4px 12px; border-radius: 20px; font-weight: 700; font-size: 10px; letter-spacing: 0.5px; box-shadow: 0 2px 12px rgba(34,211,238,0.4); animation: fadeGlow 3s ease-in-out infinite; }
   @keyframes fadeGlow { 0%,100% { opacity: 0.7; } 50% { opacity: 1; } }
+  
   input[type=email], input[type=password], input[type=text] { width: 100%; padding: 14px 16px; font-size: 16px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; color: #f0f0f0; outline: none; margin-bottom: 12px; transition: all 0.3s ease; }
   input:focus { border-color: #22d3ee; box-shadow: 0 0 15px rgba(34,211,238,0.45); transform: scale(1.02); }
+  
+  /* Password Eye Icon */
+  .pass-wrapper { position: relative; width: 100%; margin-bottom: 12px; }
+  .pass-wrapper input { margin-bottom: 0; padding-right: 45px; }
+  .eye-icon { position: absolute; right: 15px; top: 14px; font-size: 20px; cursor: pointer; user-select: none; opacity: 0.7; transition: 0.2s; }
+  .eye-icon:hover { opacity: 1; }
+
   .btn { width: 100%; padding: 14px; font-size: 15px; font-weight: 700; background: linear-gradient(135deg, #2dd4bf, #22d3ee); color: #0f0f0f; border: none; border-radius: 10px; cursor: pointer; box-shadow: 0 4px 18px rgba(34,211,238,0.35); transition: transform 0.15s ease, box-shadow 0.3s ease; margin-bottom: 8px;}
   .btn:active { transform: scale(0.96); }
   .btn:disabled { opacity: 0.5; cursor: default; box-shadow: none; }
-  .btn-secondary { background: #555; color: #fff; box-shadow: none; }
+  .toggle-link { text-align: center; margin-top: 15px; font-size: 14px; color: #22d3ee; cursor: pointer; text-decoration: underline; }
   .err-msg { color: #f87171; font-size: 13px; text-align: center; margin-top: 10px; min-height: 18px; }
   .err-msg.shake { animation: shake 0.4s; }
   @keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
@@ -69,13 +77,22 @@
 
 <div class="wrap">
   <div id="loginScreen">
-    <div class="version"><span class="version-badge">v1.7</span></div>
-    <input type="email" id="emailInput" placeholder="Email" autocomplete="off">
-    <input type="password" id="passInput" placeholder="Password" autocomplete="off">
-    <input type="text" id="inviteCodeInput" placeholder="Secret Invite Code (For Sign Up)" autocomplete="off">
+    <div class="version"><span class="version-badge">v1.9</span></div>
     
-    <button class="btn" id="loginBtn" onclick="doLogin()">Login</button>
-    <button class="btn btn-secondary" id="signupBtn" onclick="doSignUp()">Create Account</button>
+    <input type="email" id="emailInput" placeholder="Email (e.g. name@gmail.com)" autocomplete="off">
+    
+    <div class="pass-wrapper">
+      <input type="password" id="passInput" placeholder="Password" autocomplete="off">
+      <span class="eye-icon" id="eyeIcon" onclick="togglePassword()">👁️</span>
+    </div>
+
+    <!-- Hidden by default, shows on Sign Up -->
+    <div id="inviteWrapper" style="display: none;">
+      <input type="text" id="inviteCodeInput" placeholder="Secret Invite Code" autocomplete="off">
+    </div>
+    
+    <button class="btn" id="submitBtn" onclick="doLogin()">Login</button>
+    <div class="toggle-link" id="toggleAuth" onclick="toggleAuthMode()">Need an account? Sign Up</div>
     <div class="err-msg" id="errMsg"></div>
   </div>
 
@@ -115,6 +132,51 @@ let currentUserName = null;
 let siteActive = true;
 let siteToggleTimer = null;
 const SITE_TOGGLE_HOLD_MS = 3000;
+let isLoginMode = true;
+
+// --- PASSWORD EYE TOGGLE ---
+function togglePassword() {
+  const passInput = document.getElementById("passInput");
+  const eyeIcon = document.getElementById("eyeIcon");
+  if (passInput.type === "password") {
+    passInput.type = "text";
+    eyeIcon.textContent = "🙈";
+  } else {
+    passInput.type = "password";
+    eyeIcon.textContent = "👁️";
+  }
+}
+
+// --- AUTO GMAIL APPENDER ---
+document.getElementById("emailInput").addEventListener("blur", function() {
+    let val = this.value.trim();
+    if (val && !val.includes("@")) {
+        this.value = val + "@gmail.com";
+    }
+});
+
+// --- TOGGLE LOGIN / SIGNUP ---
+function toggleAuthMode() {
+    isLoginMode = !isLoginMode;
+    const inviteWrapper = document.getElementById("inviteWrapper");
+    const submitBtn = document.getElementById("submitBtn");
+    const toggleText = document.getElementById("toggleAuth");
+    const err = document.getElementById("errMsg");
+    
+    err.textContent = "";
+    
+    if (isLoginMode) {
+        inviteWrapper.style.display = "none";
+        submitBtn.textContent = "Login";
+        submitBtn.onclick = doLogin;
+        toggleText.textContent = "Need an account? Sign Up";
+    } else {
+        inviteWrapper.style.display = "block";
+        submitBtn.textContent = "Create Account";
+        submitBtn.onclick = doSignUp;
+        toggleText.textContent = "Already have an account? Login";
+    }
+}
 
 function listenSiteStatus() {
   db.ref("siteStatus/active").get().then(snap => {
@@ -226,17 +288,20 @@ function getCookie(name) {
   return "";
 }
 
+// --- REMOVED AUTO LOGIN CLICK ---
+// It now fills the form but waits for the user to click Login
 window.onload = function() {
   const savedEmail = getCookie("pf_email");
   const savedPass = getCookie("pf_pass");
   if (savedEmail && savedPass) {
     document.getElementById("emailInput").value = savedEmail;
     document.getElementById("passInput").value = savedPass;
-    doLogin();
   }
 };
 
-document.getElementById("passInput").addEventListener("keydown", e => { if (e.key === "Enter") doLogin(); });
+document.getElementById("passInput").addEventListener("keydown", e => { 
+    if (e.key === "Enter") document.getElementById("submitBtn").click(); 
+});
 
 // ==========================================
 // LOGIN FUNCTION
@@ -247,7 +312,7 @@ function doLogin() {
   if (!email || !pass) { alert("Please enter email and password"); return; }
   
   soundClick();
-  const btn = document.getElementById("loginBtn");
+  const btn = document.getElementById("submitBtn");
   const err = document.getElementById("errMsg");
   btn.disabled = true;
   btn.textContent = "...";
@@ -279,7 +344,7 @@ function doLogin() {
 }
 
 // ==========================================
-// SIGN UP FUNCTION (SECURE VERIFICATION)
+// SIGN UP FUNCTION (SMART INVITE CODE)
 // ==========================================
 function doSignUp() {
   const email = document.getElementById("emailInput").value.trim();
@@ -292,14 +357,12 @@ function doSignUp() {
   }
 
   soundClick();
-  const btn = document.getElementById("signupBtn");
+  const btn = document.getElementById("submitBtn");
   const err = document.getElementById("errMsg");
   btn.disabled = true;
   btn.textContent = "...";
   err.textContent = "Checking code...";
 
-  // THE TRICK: Try to write the code to the database. 
-  // If the rules allow it, the code is correct. If it fails, the code is wrong.
   db.ref("verifyCode/" + inviteCode).set(true)
     .then(() => {
       err.textContent = "Creating account...";
@@ -308,7 +371,7 @@ function doSignUp() {
           alert("Account created successfully! You can now log in.");
           err.textContent = "";
           btn.disabled = false;
-          btn.textContent = "Create Account";
+          toggleAuthMode(); 
         })
         .catch(error => {
           console.error("Signup error:", error);
@@ -320,8 +383,7 @@ function doSignUp() {
         });
     })
     .catch(error => {
-      // Code is invalid (Permission Denied by Firebase)
-      err.textContent = "Invalid Invite Code!";
+      err.textContent = "Invalid Invite Code. Please ask the owner to give you one!";
       shakeElement(err);
       soundError();
       btn.disabled = false;
